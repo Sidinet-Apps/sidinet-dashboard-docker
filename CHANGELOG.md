@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.1
+
+- Restored default deployment port 8088.
+- Fixed Docker Discovery frontend endpoint.
+- Added visual container picker with image, state, URL and one-click adoption.
+- Added automatic application logos using Docker image/label identity with safe fallback.
+- Refined application cards and discovery UI for a cleaner launcher-style dashboard.
+
 ## 1.1.0
 
 - Rediseño visual del dashboard con navegación lateral, barra superior y presentación renovada de tarjetas.
