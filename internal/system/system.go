@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -112,19 +113,59 @@ func (c *CPU) Collect(ctx context.Context) (any, error) {
 	return map[string]any{"percent": pct, "warming_up": warming}, nil
 }
 
-type Temp struct{ path string }
+type Temp struct{ root string }
 
-func NewTemp(root string) *Temp           { return &Temp{root + "/thermal_zone0/temp"} }
-func (t *Temp) Key() string               { return "system.temperature" }
-func (t *Temp) DefaultTTL() time.Duration { return 10 * time.Second }
+func NewTemp(root string) *Temp {
+return &Temp{root: root}
+}
+
+func (t *Temp) Key() string {
+return "system.temperature"
+}
+
+func (t *Temp) DefaultTTL() time.Duration {
+return 10 * time.Second
+}
+
 func (t *Temp) Collect(ctx context.Context) (any, error) {
-	b, e := os.ReadFile(t.path)
-	if e != nil {
-		return nil, e
-	}
-	v, e := strconv.ParseFloat(strings.TrimSpace(string(b)), 64)
-	if e != nil {
-		return nil, e
-	}
-	return map[string]any{"celsius": v / 1000}, nil
+zones, err := filepath.Glob(filepath.Join(t.root, "thermal_zone*", "temp"))
+if err != nil {
+return map[string]any{"available": false}, nil
+}
+
+for _, path := range zones {
+select {
+case <-ctx.Done():
+return nil, ctx.Err()
+default:
+}
+
+b, err := os.ReadFile(path)
+if err != nil {
+continue
+}
+
+v, err := strconv.ParseFloat(strings.TrimSpace(string(b)), 64)
+if err != nil {
+continue
+}
+
+if v > 1000 {
+v = v / 1000
+}
+
+if v < -50 || v > 200 {
+continue
+}
+
+return map[string]any{
+"available": true,
+"celsius":   v,
+"source":    filepath.Base(filepath.Dir(path)),
+}, nil
+}
+
+return map[string]any{
+"available": false,
+}, nil
 }
