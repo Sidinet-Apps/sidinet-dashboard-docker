@@ -1,0 +1,12 @@
+/data/
+data/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+*.out
+*.test
+/dashboard
+/docker-proxy
+.env
+.DS_Store

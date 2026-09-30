@@ -1,0 +1,2 @@
+-- Documentation copy of the embedded initial schema. Runtime migration is embedded in internal/database/sqlite.go for the bootstrap build.
+-- Future milestones should move all immutable migrations into an embedded migration filesystem.

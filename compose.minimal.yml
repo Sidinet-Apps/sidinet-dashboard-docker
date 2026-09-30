@@ -1,0 +1,34 @@
+# Minimal deployment: no Docker discovery, no docker.sock, existing Docker/Compose only.
+services:
+  sidinet-dashboard:
+    image: "${SIDINET_IMAGE:-ghcr.io/CHANGE_ME/sidinet-dashboard-docker:latest}"
+    container_name: sidinet-dashboard
+    restart: unless-stopped
+    ports:
+      - "${SIDINET_PORT:-8585}:8080"
+    environment:
+      TZ: "${TZ:-America/Mexico_City}"
+      SIDINET_DATA_DIR: /data
+      SIDINET_DOCKER_ENABLED: "false"
+      SIDINET_PERFORMANCE_PROFILE: "${SIDINET_PERFORMANCE_PROFILE:-balanced}"
+      SIDINET_HOST_RESOLV_CONF: /host/etc/resolv.conf
+      SIDINET_INTERNET_TARGET: "${SIDINET_INTERNET_TARGET:-1.1.1.1:53}"
+      SIDINET_STORAGE_PATHS: "${SIDINET_STORAGE_PATHS:-/data}"
+    volumes:
+      - "${SIDINET_DATA_DIR:-./data}:/data"
+      - /proc:/host/proc:ro
+      - /sys/class/thermal:/host/sys/class/thermal:ro
+      - /etc/resolv.conf:/host/etc/resolv.conf:ro
+      # Optional host/NAS paths: mount each read-only and add its container path to SIDINET_STORAGE_PATHS.
+      # - /srv/dev-disk-by-uuid-XXXX:/host/storage/data:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 100
+    mem_limit: 256m
+    cpus: 0.50
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "3"}

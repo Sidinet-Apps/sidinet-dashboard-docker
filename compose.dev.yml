@@ -1,0 +1,16 @@
+services:
+  sidinet-dashboard:
+    build: .
+    image: sidinet/sidinet-dashboard-docker:dev
+    ports: ["8585:8080"]
+    environment:
+      TZ: America/Mexico_City
+      SIDINET_DATA_DIR: /data
+      SIDINET_DOCKER_ENABLED: "false"
+    volumes:
+      - ./data:/data
+      - /proc:/host/proc:ro
+      - /sys/class/thermal:/host/sys/class/thermal:ro
+      - /etc/resolv.conf:/host/etc/resolv.conf:ro
+      # Optional host/NAS paths: mount each read-only and add its container path to SIDINET_STORAGE_PATHS.
+      # - /srv/dev-disk-by-uuid-XXXX:/host/storage/data:ro

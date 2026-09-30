@@ -1,0 +1,6 @@
+{
+  "jellyfin":{"images":["jellyfin/jellyfin","linuxserver/jellyfin"],"ports":[8096],"protocol":"http","icon":"jellyfin"},
+  "portainer":{"images":["portainer/portainer-ce"],"ports":[9443,9000],"protocol":"https","icon":"portainer"},
+  "home-assistant":{"images":["homeassistant/home-assistant"],"ports":[8123],"protocol":"http","icon":"home-assistant"},
+  "grafana":{"images":["grafana/grafana"],"ports":[3000],"protocol":"http","icon":"grafana"}
+}
