@@ -12,7 +12,7 @@ function value(w){
     if(w.type==='application.shortcut'){
         return w.application
             ? `<a class="launch" href="${esc(w.application.url)}" target="_blank" rel="noopener">Abrir</a>${monitor(w.application.monitor)}`
-            : 'AplicaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n';
+            : 'Aplicación';
     }
 
     if(w.type==='information.iframe'){
@@ -63,7 +63,7 @@ function value(w){
 
         case 'network.internet':
             if(d.online === true) return 'Conectado';
-            if(d.online === false) return 'Sin conexiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n';
+            if(d.online === false) return 'Sin conexión';
             return 'No disponible';
 
         case 'storage.disks':
@@ -466,7 +466,7 @@ $('undo').onclick=()=>{if(!undoStack.length)return;redoStack.push(clone(widgets)
 $('grid').addEventListener('pointerdown',e=>{if(!editing)return;if(e.target.closest('.cardEditTools,button,a,input,select,textarea'))return;const card=e.target.closest('.card[data-id]');if(!card)return;const w=widgets.find(x=>String(x.id)===card.dataset.id);if(!w)return;pushUndo();const l=w.layout;drag={w,card,sx:e.clientX,sy:e.clientY,start:clone(l),resize:!!e.target.dataset.resize};card.classList.add('dragging');card.setPointerCapture(e.pointerId)});
 $('grid').addEventListener('pointermove',e=>{if(!drag)return;const rect=$('grid').getBoundingClientRect(),cw=rect.width/cols[bp()],rh=64+parseFloat(getComputedStyle($('grid')).gap||0),dx=Math.round((e.clientX-drag.sx)/cw),dy=Math.round((e.clientY-drag.sy)/rh),l=drag.w.layout,c=cols[bp()];if(drag.resize){l.w=Math.max(1,Math.min(c-drag.start.x,drag.start.w+dx));l.h=Math.max(1,drag.start.h+dy)}else{l.x=Math.max(0,Math.min(c-l.w,drag.start.x+dx));l.y=Math.max(0,drag.start.y+dy)}render()});
 $('grid').addEventListener('pointerup',e=>{if(drag){drag.card.classList.remove('dragging');drag=null}});
-$('grid').addEventListener('click',async e=>{const b=e.target.closest('button[data-a]');if(!b)return;const w=widgets.find(x=>String(x.id)===b.closest('.card').dataset.id),a=b.dataset.a;try{if(a==='props')return properties(w);if(a==='duplicate')await api(`/api/v1/widgets/${w.id}/duplicate`,{method:'POST'});if(a==='hide')await api(`/api/v1/widgets/${w.id}/hide`,{method:'POST'});if(a==='delete'&&confirm('ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿Eliminar este widget?'))await api(`/api/v1/widgets/${w.id}`,{method:'DELETE'});await refresh()}catch(x){alert(x.message)}});
+$('grid').addEventListener('click',async e=>{const b=e.target.closest('button[data-a]');if(!b)return;const w=widgets.find(x=>String(x.id)===b.closest('.card').dataset.id),a=b.dataset.a;try{if(a==='props')return properties(w);if(a==='duplicate')await api(`/api/v1/widgets/${w.id}/duplicate`,{method:'POST'});if(a==='hide')await api(`/api/v1/widgets/${w.id}/hide`,{method:'POST'});if(a==='delete'&&confirm('¿Eliminar este widget?'))await api(`/api/v1/widgets/${w.id}`,{method:'DELETE'});await refresh()}catch(x){alert(x.message)}});
 function properties(w){
     const groups=widgets.filter(x=>x.type==='layout.group'&&x.id!==w.id);
     const app=w.application||null;
@@ -536,7 +536,7 @@ $('save').onclick=async()=>{
         $('status').textContent=e.message;
     }
 };
-$('addPage').onclick=async()=>{const name=prompt('Nombre de la nueva pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡gina');if(!name)return;const j=await api('/api/v1/pages',{method:'POST',body:JSON.stringify({name})});slug=j.slug;await loadPages();start()};
+$('addPage').onclick=async()=>{const name=prompt('Nombre de la nueva página');if(!name)return;const j=await api('/api/v1/pages',{method:'POST',body:JSON.stringify({name})});slug=j.slug;await loadPages();start()};
 $('store').onclick=async()=>{
     $('modalBody').innerHTML=`
         <div class="addPanel">
