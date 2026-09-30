@@ -1,0 +1,70 @@
+name: Publish stable release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Stable semantic version without v prefix
+        required: true
+        default: 1.1.0
+        type: string
+      target_sha:
+        description: Exact commit SHA to release
+        required: true
+        default: fc0829b3744f08f259266eb551de348503b5805f
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-stable-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Validate target and create stable tag
+        id: release
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid stable version: $VERSION"
+            exit 1
+          fi
+          git fetch --force --tags origin
+          git cat-file -e "$TARGET_SHA^{commit}"
+          tag="v$VERSION"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            existing="$(git rev-list -n 1 "$tag")"
+            if [[ "$existing" != "$TARGET_SHA" ]]; then
+              echo "$tag already exists on $existing, expected $TARGET_SHA"
+              exit 1
+            fi
+            echo "Tag already exists on requested target."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$tag" "$TARGET_SHA" -m "SIDINET Dashboard $tag"
+            git push origin "$tag"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub stable release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: SIDINET Dashboard ${{ steps.release.outputs.tag }}
+          prerelease: false
+          make_latest: true
+          generate_release_notes: true
