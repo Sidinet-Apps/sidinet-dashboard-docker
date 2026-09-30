@@ -193,7 +193,7 @@ function applicationBody(w){
     const content=`
         <div class="applicationTop">
             <div class="applicationIcon" aria-hidden="true">
-                ${iconURL?`<img src="${esc(iconURL)}" alt="" loading="lazy" onerror="this.remove();this.parentElement.querySelector('.applicationFallback').hidden=false"><span class="applicationFallback" hidden>${esc(initial)}</span>`:`<span class="applicationFallback">${esc(initial)}</span>`}
+                ${iconURL?`<img src="${esc(iconURL)}" alt="" loading="lazy" data-icon-fallback="application"><span class="applicationFallback" hidden>${esc(initial)}</span>`:`<span class="applicationFallback">${esc(initial)}</span>`}
             </div>
 
             ${url?`
@@ -718,7 +718,7 @@ $('discover').onclick=async()=>{
                 const icon=slug?'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/'+encodeURIComponent(slug)+'.svg':'';
                 const initial=String(s.suggested_name||s.service||s.container_name||'D').charAt(0).toUpperCase();
                 return `<article class="discoveryCard">
-                    <div class="discoveryIcon">${icon?`<img src="${esc(icon)}" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent='${esc(initial)}'">`:esc(initial)}</div>
+                    <div class="discoveryIcon">${icon?`<img src="${esc(icon)}" alt="" loading="lazy" data-icon-fallback="docker" data-fallback="${esc(initial)}">`:esc(initial)}</div>
                     <div class="discoveryInfo">
                         <strong>${esc(s.suggested_name||s.service||s.container_name||'Servicio')}</strong>
                         <span>${esc(s.image||'')}</span>
@@ -740,4 +740,16 @@ $('discover').onclick=async()=>{
         });
     }catch(e){alert(e.message)}
 };
+document.addEventListener('error',e=>{
+    const img=e.target;
+    if(!(img instanceof HTMLImageElement)||!img.dataset.iconFallback)return;
+    const parent=img.parentElement;
+    img.remove();
+    if(img.dataset.iconFallback==='application'){
+        const fallback=parent?.querySelector('.applicationFallback');
+        if(fallback)fallback.hidden=false;
+    }else if(parent){
+        parent.textContent=img.dataset.fallback||'D';
+    }
+},true);
 loadPages().then(start);
