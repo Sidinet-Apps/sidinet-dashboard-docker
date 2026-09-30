@@ -8,7 +8,7 @@ pass(){ printf 'PASS  %s\n' "$1"; }
 fail(){ printf 'FAIL  %s\n' "$1"; FAILURES=$((FAILURES+1)); }
 warn(){ printf 'WARN  %s\n' "$1"; WARNINGS=$((WARNINGS+1)); }
 
-printf '\nSIDINET Dashboard 1.0.1 Security Smoke Test\n'
+printf '\nSIDINET Dashboard 1.1.0 Security Smoke Test\n'
 printf '============================================\n\n'
 
 command -v docker >/dev/null 2>&1 || {
@@ -70,7 +70,7 @@ grep -q 'no-new-privileges' <<<"$SEC" \
 # ------------------------------------------------------------
 # Linux capabilities
 #
-# v1.0.1 requires exactly:
+# v1.1.0 requires exactly:
 #
 # CHOWN  - prepare ownership of /data
 # SETUID - drop privileges to PUID
@@ -332,7 +332,7 @@ printf 'Failures: %d\n' "$FAILURES"
 printf 'Warnings: %d\n' "$WARNINGS"
 
 if (( FAILURES != 0 )); then
-    printf '\nSECURITY RESULT: FAILED - DO NOT RELEASE 1.0.1\n'
+    printf '\nSECURITY RESULT: FAILED - DO NOT RELEASE 1.1.0\n'
     exit 1
 fi
 
