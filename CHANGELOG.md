@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.2
+
+- Reemplaza el arrastre defectuoso por movimiento persistente con Pointer Events.
+- Aplica coordenadas X/Y reales y redimensionamiento estable.
+- Evita reconstruir el DOM durante drag/resize.
+- Simplifica el grid para eliminar filas artificiales y huecos de secciones.
+- Añade tratamiento de colisiones y una cuadrícula visual en modo edición.
+- Renueva la interfaz con una capa visual más compacta y premium.
+
+
 ## 1.1.1
 
 - Restored default deployment port 8088.

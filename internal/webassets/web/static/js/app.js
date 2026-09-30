@@ -290,7 +290,7 @@ function createWidgetCard(w,children){
         `${Math.min(l.x,cols[bp()]-1)+1} / span ${Math.min(l.w,cols[bp()])}`;
 
     a.style.gridRow=
-        `span ${Math.max(1,l.h)}`;
+        `${Math.max(0,l.y)+1} / span ${Math.max(1,l.h)}`;
 
     let body;
 
@@ -309,86 +309,27 @@ function createWidgetCard(w,children){
 
 function render(){
     const g=$('grid');
-
     g.className=`grid ${bp()}`;
     g.innerHTML='';
 
     const children=new Map();
-
     widgets.forEach(w=>{
         if(w.parent_widget_id){
-            if(!children.has(w.parent_widget_id))
-                children.set(w.parent_widget_id,[]);
-
+            if(!children.has(w.parent_widget_id))children.set(w.parent_widget_id,[]);
             children.get(w.parent_widget_id).push(w);
         }
     });
 
-    const visible=widgets.filter(w=>!w.parent_widget_id);
+    const visible=widgets
+        .filter(w=>!w.parent_widget_id)
+        .sort((a,b)=>(a.layout?.y||0)-(b.layout?.y||0)||(a.layout?.x||0)-(b.layout?.x||0));
 
-    const applications=visible.filter(
-        w=>widgetCategory(w)==='applications'
-    );
-
-    const groups=visible.filter(
-        w=>widgetCategory(w)==='groups'
-    );
-
-    const system=visible.filter(
-        w=>widgetCategory(w)==='system'
-    );
-
-    if(applications.length){
-        g.appendChild(
-            createSectionHeader(
-                'Aplicaciones',
-                'Accesos rápidos a tus servicios',
-                'applications'
-            )
-        );
-
-        applications.forEach(w=>{
-            g.appendChild(createWidgetCard(w,children));
-        });
-    }
-
-    if(groups.length){
-        g.appendChild(
-            createSectionHeader(
-                'Grupos',
-                '',
-                'groups'
-            )
-        );
-
-        groups.forEach(w=>{
-            g.appendChild(createWidgetCard(w,children));
-        });
-    }
-
-    if(system.length){
-        g.appendChild(
-            createSectionHeader(
-                'Sistema',
-                'Estado y recursos del servidor',
-                'system'
-            )
-        );
-
-        system.forEach(w=>{
-            g.appendChild(createWidgetCard(w,children));
-        });
-    }
+    visible.forEach(w=>g.appendChild(createWidgetCard(w,children)));
 
     if(!visible.length){
         const empty=document.createElement('div');
-
         empty.className='dashboardEmpty';
-        empty.innerHTML=`
-            <strong>Tu dashboard está vacío</strong>
-            <span>Entra en Editar para agregar aplicaciones y widgets.</span>
-        `;
-
+        empty.innerHTML=`<strong>Tu dashboard está vacío</strong><span>Entra en Editar para agregar aplicaciones y widgets.</span>`;
         g.appendChild(empty);
     }
 }
@@ -463,9 +404,63 @@ $('cancel').onclick=()=>{
 
 $('breakpoint').onchange=refresh;
 $('undo').onclick=()=>{if(!undoStack.length)return;redoStack.push(clone(widgets));widgets=undoStack.pop();render()};$('redo').onclick=()=>{if(!redoStack.length)return;undoStack.push(clone(widgets));widgets=redoStack.pop();render()};
-$('grid').addEventListener('pointerdown',e=>{if(!editing)return;if(e.target.closest('.cardEditTools,button,a,input,select,textarea'))return;const card=e.target.closest('.card[data-id]');if(!card)return;const w=widgets.find(x=>String(x.id)===card.dataset.id);if(!w)return;pushUndo();const l=w.layout;drag={w,card,sx:e.clientX,sy:e.clientY,start:clone(l),resize:!!e.target.dataset.resize};card.classList.add('dragging');card.setPointerCapture(e.pointerId)});
-$('grid').addEventListener('pointermove',e=>{if(!drag)return;const rect=$('grid').getBoundingClientRect(),cw=rect.width/cols[bp()],rh=64+parseFloat(getComputedStyle($('grid')).gap||0),dx=Math.round((e.clientX-drag.sx)/cw),dy=Math.round((e.clientY-drag.sy)/rh),l=drag.w.layout,c=cols[bp()];if(drag.resize){l.w=Math.max(1,Math.min(c-drag.start.x,drag.start.w+dx));l.h=Math.max(1,drag.start.h+dy)}else{l.x=Math.max(0,Math.min(c-l.w,drag.start.x+dx));l.y=Math.max(0,drag.start.y+dy)}render()});
-$('grid').addEventListener('pointerup',e=>{if(drag){drag.card.classList.remove('dragging');drag=null}});
+function applyCardLayout(card,l){
+    const c=cols[bp()];
+    card.style.gridColumn=`${Math.min(l.x,c-1)+1} / span ${Math.min(l.w,c)}`;
+    card.style.gridRow=`${Math.max(0,l.y)+1} / span ${Math.max(1,l.h)}`;
+}
+function overlaps(a,b){
+    return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+}
+function settleCollision(active,start){
+    const hit=widgets.find(x=>x.id!==active.id&&!x.parent_widget_id&&overlaps(active.layout,x.layout));
+    if(!hit)return;
+    const old=clone(hit.layout);
+    hit.layout.x=Math.max(0,Math.min(cols[bp()]-hit.layout.w,start.x));
+    hit.layout.y=Math.max(0,start.y);
+    if(widgets.some(x=>x.id!==active.id&&x.id!==hit.id&&!x.parent_widget_id&&overlaps(hit.layout,x.layout)))hit.layout=old;
+}
+$('grid').addEventListener('pointerdown',e=>{
+    if(!editing)return;
+    if(e.target.closest('.cardEditTools,button,a,input,select,textarea'))return;
+    const card=e.target.closest('.card[data-id]');if(!card)return;
+    const w=widgets.find(x=>String(x.id)===card.dataset.id);if(!w)return;
+    pushUndo();
+    drag={w,card,sx:e.clientX,sy:e.clientY,start:clone(w.layout),resize:!!e.target.closest('[data-resize]'),pointerId:e.pointerId};
+    card.classList.add('dragging');
+    card.setPointerCapture(e.pointerId);
+});
+$('grid').addEventListener('pointermove',e=>{
+    if(!drag||e.pointerId!==drag.pointerId)return;
+    const rect=$('grid').getBoundingClientRect();
+    const style=getComputedStyle($('grid'));
+    const gap=parseFloat(style.columnGap||style.gap)||0;
+    const rowGap=parseFloat(style.rowGap||style.gap)||0;
+    const c=cols[bp()];
+    const cw=(rect.width-gap*(c-1))/c+gap;
+    const rh=64+rowGap;
+    const dx=Math.round((e.clientX-drag.sx)/cw);
+    const dy=Math.round((e.clientY-drag.sy)/rh);
+    const l=drag.w.layout;
+    if(drag.resize){
+        l.w=Math.max(1,Math.min(c-drag.start.x,drag.start.w+dx));
+        l.h=Math.max(1,drag.start.h+dy);
+    }else{
+        l.x=Math.max(0,Math.min(c-l.w,drag.start.x+dx));
+        l.y=Math.max(0,drag.start.y+dy);
+    }
+    applyCardLayout(drag.card,l);
+});
+function finishDrag(e){
+    if(!drag||e.pointerId!==drag.pointerId)return;
+    if(!drag.resize)settleCollision(drag.w,drag.start);
+    try{drag.card.releasePointerCapture(e.pointerId)}catch(_){}
+    drag.card.classList.remove('dragging');
+    drag=null;
+    render();
+}
+$('grid').addEventListener('pointerup',finishDrag);
+$('grid').addEventListener('pointercancel',finishDrag);
 $('grid').addEventListener('click',async e=>{const b=e.target.closest('button[data-a]');if(!b)return;const w=widgets.find(x=>String(x.id)===b.closest('.card').dataset.id),a=b.dataset.a;try{if(a==='props')return properties(w);if(a==='duplicate')await api(`/api/v1/widgets/${w.id}/duplicate`,{method:'POST'});if(a==='hide')await api(`/api/v1/widgets/${w.id}/hide`,{method:'POST'});if(a==='delete'&&confirm('¿Eliminar este widget?'))await api(`/api/v1/widgets/${w.id}`,{method:'DELETE'});await refresh()}catch(x){alert(x.message)}});
 function properties(w){
     const groups=widgets.filter(x=>x.type==='layout.group'&&x.id!==w.id);
