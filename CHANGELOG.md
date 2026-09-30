@@ -7,6 +7,7 @@
 - Added visual container picker with image, state, URL and one-click adoption.
 - Added automatic application logos using Docker image/label identity with safe fallback.
 - Refined application cards and discovery UI for a cleaner launcher-style dashboard.
+- Repaired dashboard CRUD: edit application/card properties, duplicate with layouts, delete with orphan cleanup, and protected edit controls from drag capture.
 
 ## 1.1.0
 
