@@ -434,7 +434,7 @@ function setEditing(enabled){
     editing=enabled;
     document.body.classList.toggle('editingMode',editing);
     $('editor').hidden=!editing;
-    $('edit').textContent=editing?'Salir de ediciÃ³n':'Editar';
+    $('edit').textContent=editing?'Finalizar':'Editar';
 }
 
 $('edit').onclick=()=>{
@@ -604,6 +604,66 @@ $('store').onclick=async()=>{
         `;
     }
 };
+$('modal').addEventListener('click',e=>{
+    const viewButton=e.target.closest('[data-add-view]');
+    if(viewButton){
+        const view=viewButton.dataset.addView;
+        document.querySelectorAll('.addType').forEach(b=>b.classList.toggle('active',b===viewButton));
+        const appView=$('applicationAddView');
+        const widgetView=$('widgetAddView');
+        if(appView) appView.hidden=view!=='application';
+        if(widgetView) widgetView.hidden=view!=='widget';
+        return;
+    }
+
+    if(e.target.closest('[data-close-add]')){
+        $('modal').close();
+    }
+});
+
+$('modal').addEventListener('submit',async e=>{
+    if(e.target.id!=='applicationForm')
+        return;
+
+    e.preventDefault();
+
+    const submit=e.target.querySelector('[type="submit"]');
+    const error=$('applicationFormError');
+    if(submit) submit.disabled=true;
+    if(error) error.hidden=true;
+
+    try{
+        const app=await api('/api/v1/applications',{
+            method:'POST',
+            body:JSON.stringify({
+                Name:$('applicationName').value.trim(),
+                URL:$('applicationURL').value.trim(),
+                Description:$('applicationDescription').value.trim()
+            })
+        });
+
+        await api('/api/v1/widgets',{
+            method:'POST',
+            body:JSON.stringify({
+                page_id:pageId,
+                type:'application.shortcut',
+                title:$('applicationName').value.trim(),
+                application_id:Number(app.id)
+            })
+        });
+
+        $('modal').close();
+        $('status').textContent='Aplicación agregada';
+        await refresh();
+    }catch(err){
+        if(error){
+            error.textContent=err.message;
+            error.hidden=false;
+        }
+        if(submit) submit.disabled=false;
+    }
+});
+
 $('modal').addEventListener('click',async e=>{
     const widget=e.target.closest('.storeItem');
 
