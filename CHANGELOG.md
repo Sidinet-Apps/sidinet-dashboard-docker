@@ -1,10 +1,21 @@
+# Changelog
+
+## 1.1.0
+
+- Rediseño visual del dashboard con navegación lateral, barra superior y presentación renovada de tarjetas.
+- Flujo restaurado y mejorado para agregar aplicaciones y widgets desde el modo de edición.
+- Tarjetas de aplicaciones y métricas adaptadas al nuevo diseño, conservando layouts responsive y edición visual.
+- Mejoras en renderizado de métricas del sistema y detección de zonas térmicas.
+- Soporte de PUID/PGID para permisos de los datos persistentes.
+- Workflow manual de betas con numeración automática, imagen multi-arquitectura y prerelease de GitHub.
+- Se mantienen los límites de seguridad: dashboard de observación, Docker Discovery mediante proxy read-only y sin administración de OMV/host.
+
 ## 1.0.0
 
 - Stable release based on 0.13.0; no new product features.
 - Finalized generic Docker/Compose documentation and security release gate.
 - Added Compose-aware security smoke test for host/Docker isolation.
 
-# Changelog
 
 ## 0.13.0
 - Technical stabilization only; no new dashboard features.
