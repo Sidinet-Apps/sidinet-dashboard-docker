@@ -175,7 +175,7 @@ func (s *Server) pages(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) applications(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		v, e := s.db.QueryText(`SELECT COALESCE(json_group_array(json_object('id',id,'name',name,'url',url,'description',COALESCE(description,''),'open_mode',open_mode)), '[]') FROM (SELECT * FROM applications WHERE enabled=1 ORDER BY name);`)
+		v, e := s.db.QueryText(`SELECT COALESCE(json_group_array(json_object('id',id,'name',name,'url',url,'description',COALESCE(description,''),'open_mode',open_mode,'icon_type',icon_type,'icon_value',COALESCE(icon_value,''),'source_type',source_type)), '[]') FROM (SELECT * FROM applications WHERE enabled=1 ORDER BY name);`)
 		if e != nil {
 			s.json(w, 500, map[string]any{"error": e.Error()})
 			return
@@ -395,7 +395,7 @@ func (s *Server) runtimePage(w http.ResponseWriter, r *http.Request) {
 		if x["type"] == "application.shortcut" {
 			if cfg, ok := x["config"].(map[string]any); ok {
 				if aid, ok := cfg["application_id"].(float64); ok {
-					aj, _ := s.db.QueryText(`SELECT json_object('id',id,'name',name,'url',url,'description',COALESCE(description,''),'open_mode',open_mode,'monitor_id',COALESCE(monitor_id,0)) FROM applications WHERE enabled=1 AND id=` + strconv.FormatInt(int64(aid), 10) + ` LIMIT 1;`)
+					aj, _ := s.db.QueryText(`SELECT json_object('id',id,'name',name,'url',url,'description',COALESCE(description,''),'open_mode',open_mode,'monitor_id',COALESCE(monitor_id,0),'icon_type',icon_type,'icon_value',COALESCE(icon_value,''),'source_type',source_type) FROM applications WHERE enabled=1 AND id=` + strconv.FormatInt(int64(aid), 10) + ` LIMIT 1;`)
 					var app any
 					if aj != "" {
 						_ = json.Unmarshal([]byte(aj), &app)
@@ -552,14 +552,16 @@ func (s *Server) discoveryAdopt(w http.ResponseWriter, r *http.Request) {
 		s.json(w, 400, map[string]any{"error": "invalid adoption"})
 		return
 	}
-	raw, e := s.db.QueryText(`SELECT COALESCE(json_object('name',service_name,'url',COALESCE(suggested_url,'')),'') FROM docker_services WHERE stable_key=` + database.Quote(in.StableKey) + `;`)
+	raw, e := s.db.QueryText(`SELECT COALESCE(json_object('name',service_name,'url',COALESCE(suggested_url,''),'icon',COALESCE(suggested_icon,''),'image',COALESCE(image,'')),'') FROM docker_services WHERE stable_key=` + database.Quote(in.StableKey) + `;`)
 	if e != nil || raw == "" {
 		s.json(w, 404, map[string]any{"error": "service not found"})
 		return
 	}
 	var d struct {
-		Name string `json:"name"`
-		URL  string `json:"url"`
+		Name  string `json:"name"`
+		URL   string `json:"url"`
+		Icon  string `json:"icon"`
+		Image string `json:"image"`
 	}
 	_ = json.Unmarshal([]byte(raw), &d)
 	if !discovery.ValidSuggestedURL(d.URL) {
@@ -569,7 +571,7 @@ func (s *Server) discoveryAdopt(w http.ResponseWriter, r *http.Request) {
 	source := "docker:" + in.StableKey
 	appID, _ := s.db.QueryText(`SELECT COALESCE(CAST(id AS TEXT),'') FROM applications WHERE source_type='docker' AND source_id=` + database.Quote(in.StableKey) + ` LIMIT 1;`)
 	if appID == "" {
-		if e := s.db.Exec(`INSERT INTO applications(name,url,source_type,source_id) VALUES(` + database.Quote(d.Name) + `,` + database.Quote(d.URL) + `,'docker',` + database.Quote(in.StableKey) + `);`); e != nil {
+		if e := s.db.Exec(`INSERT INTO applications(name,url,icon_type,icon_value,source_type,source_id) VALUES(` + database.Quote(d.Name) + `,` + database.Quote(d.URL) + `,'auto',` + database.Quote(firstNonEmptyString(d.Icon, d.Image)) + `,'docker',` + database.Quote(in.StableKey) + `);`); e != nil {
 			s.json(w, 500, map[string]any{"error": e.Error()})
 			return
 		}
@@ -773,4 +775,11 @@ func (s *Server) recoveryDiagnostics(w http.ResponseWriter, r *http.Request) {
 		}
 		return 0
 	}(), "uploads_bytes": ups, "monitors": mon, "docker_services": svc, "docker_enabled": s.cfg.DockerEnabled && !s.cfg.SafeMode, "storage_paths": s.cfg.StoragePaths})
+}
+
+func firstNonEmptyString(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" { return value }
+	}
+	return ""
 }
