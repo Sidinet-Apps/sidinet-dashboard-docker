@@ -757,7 +757,7 @@ $('discover').onclick=async()=>{
             <div class="discoveryList">
             ${services.map((s,i)=>{
                 const hint=String(s.suggested_icon||s.image||s.suggested_name||'').toLowerCase();
-                const slug=hint.replace(/^.*\\//,'').replace(/[:@].*$/,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+                const slug=(hint.split('/').pop()||'').replace(/[:@].*$/,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
                 const icon=slug?'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/'+encodeURIComponent(slug)+'.svg':'';
                 const initial=String(s.suggested_name||s.service||s.container_name||'D').charAt(0).toUpperCase();
                 return `<article class="discoveryCard">
