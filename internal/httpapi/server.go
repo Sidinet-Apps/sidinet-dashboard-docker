@@ -293,7 +293,9 @@ func (s *Server) widgetAction(w http.ResponseWriter, r *http.Request) {
 			refs, _ := s.db.QueryText(`SELECT COUNT(*) FROM widgets WHERE widget_type='application.shortcut' AND json_extract(config,'$.application_id')=`+appID+`;`)
 			if refs == "0" {
 				sourceID, _ := s.db.QueryText(`SELECT COALESCE(source_id,'') FROM applications WHERE id=`+appID+`;`)
+				monitorID, _ := s.db.QueryText(`SELECT COALESCE(CAST(monitor_id AS TEXT),'') FROM applications WHERE id=`+appID+`;`)
 				_ = s.db.Exec(`DELETE FROM applications WHERE id=`+appID+`;`)
+				if monitorID != "" && monitorID != "0" { _ = s.db.Exec(`DELETE FROM monitors WHERE id=`+monitorID+`;`) }
 				if sourceID != "" { _ = s.db.Exec(`UPDATE docker_services SET dashboard_status='AVAILABLE',updated_at=CURRENT_TIMESTAMP WHERE stable_key=`+database.Quote(sourceID)+`;`) }
 			}
 		}
