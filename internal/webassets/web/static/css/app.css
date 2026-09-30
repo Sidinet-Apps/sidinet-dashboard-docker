@@ -1142,3 +1142,35 @@ body.editingMode .dashboardGridHeader::after {
 .discoveryAdd{min-width:82px}.discoveryAdd.added{background:#287a4b}
 .discoveryAdd:disabled{opacity:.48;cursor:not-allowed}
 @media(max-width:620px){.discoveryCard{grid-template-columns:46px minmax(0,1fr)}.discoveryIcon{width:46px;height:46px}.discoveryAdd{grid-column:1/-1;width:100%}}
+
+/* v1.1.2 premium visual system */
+:root{
+ --bg:#070d18;--surface:rgba(16,26,43,.76);--surface-strong:#111b2c;
+ --surface-hover:rgba(24,38,61,.92);--border:rgba(148,163,184,.13);
+ --muted:#8f9bb0;--text:#f7f9fc;--accent:#62adff;--radius:18px;
+ --gap:14px;--card-padding:18px;--shadow:0 12px 34px rgba(0,0,0,.16);
+}
+body{background:radial-gradient(circle at 52% -20%,rgba(52,118,205,.13),transparent 38%),var(--bg)}
+.sidebar{background:rgba(7,13,24,.92);border-right-color:rgba(148,163,184,.14);backdrop-filter:blur(18px)}
+.brand{padding:18px 12px 22px}.brandMark{border-radius:12px;box-shadow:0 8px 24px rgba(80,160,255,.22)}
+.sidebarNav button{border-radius:12px;padding:11px 12px}.sidebarNav button.active{background:linear-gradient(135deg,rgba(66,132,220,.22),rgba(66,132,220,.10));border-color:rgba(98,173,255,.28)}
+.topbar{background:rgba(7,13,24,.70);border-bottom-color:rgba(148,163,184,.13);backdrop-filter:blur(18px)}
+.searchBox input{height:42px;border-radius:13px;background:rgba(255,255,255,.035);border-color:rgba(148,163,184,.22)}
+main{max-width:1440px;padding-top:34px}
+.pageHeader{margin-bottom:26px}.pageHeader h1{font-size:2rem;letter-spacing:-.045em}.pageHeader p{color:var(--muted)}
+.grid{position:relative;grid-auto-rows:64px;grid-auto-flow:row;align-items:stretch}
+.card{background:linear-gradient(145deg,rgba(22,35,56,.86),rgba(13,23,39,.82));border-color:rgba(148,163,184,.13);box-shadow:0 10px 28px rgba(0,0,0,.14)}
+.card:not(.editing):hover{transform:translateY(-3px);border-color:rgba(98,173,255,.28);box-shadow:0 18px 42px rgba(0,0,0,.24)}
+.applicationCard{min-height:0;gap:12px;background:linear-gradient(145deg,rgba(21,34,55,.92),rgba(13,23,39,.88))}
+.applicationIcon{width:52px;height:52px;flex-basis:52px;padding:8px;border-radius:15px;box-shadow:0 8px 20px rgba(0,0,0,.20)}
+.applicationInfo strong{font-size:1rem;letter-spacing:-.015em}.applicationInfo span{color:#8f9bb0}
+.metricCardValue{font-size:1.8rem}.metricProgress{height:4px;background:rgba(255,255,255,.07)}
+.primaryButton{box-shadow:0 8px 22px rgba(58,139,230,.20)}
+.editorBar{position:sticky;top:72px;z-index:40;box-shadow:0 16px 40px rgba(0,0,0,.24)}
+body.editingMode .grid{min-height:620px;background-image:linear-gradient(rgba(98,173,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(98,173,255,.045) 1px,transparent 1px);background-size:calc((100% - 11 * var(--gap))/12 + var(--gap)) 78px;border-radius:18px}
+body.editingMode .card{z-index:2;outline:1px solid rgba(98,173,255,.32);box-shadow:0 12px 34px rgba(0,0,0,.28)}
+body.editingMode .card.dragging{z-index:30;opacity:.92;transform:scale(1.015);box-shadow:0 28px 70px rgba(0,0,0,.48);outline:2px solid var(--accent)}
+.resizeHandle{right:8px;bottom:8px;width:18px;height:18px;border-width:0 3px 3px 0;border-color:var(--accent);opacity:.9}
+.cardEditTools{top:7px;right:7px;background:rgba(7,13,24,.94);border-color:rgba(148,163,184,.20)}
+@media(max-width:900px){body.editingMode .grid{background-size:calc((100% - 7 * var(--gap))/8 + var(--gap)) 78px}}
+@media(max-width:700px){body.editingMode .grid{background-size:calc((100% - 3 * var(--gap))/4 + var(--gap)) 78px}}
