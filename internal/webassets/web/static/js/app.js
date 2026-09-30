@@ -185,14 +185,15 @@ function applicationBody(w){
             ? '_self'
             : '_blank';
 
-    const initial=String(
-        w.title||app.name||'A'
-    ).trim().charAt(0).toUpperCase();
+    const initial=String(w.title||app.name||'A').trim().charAt(0).toUpperCase();
+    const iconHint=String(app.icon_value||app.name||'').toLowerCase();
+    const iconSlug=iconHint.replace(/^.*\//,'').replace(/[:@].*$/,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    const iconURL=iconSlug?'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/'+encodeURIComponent(iconSlug)+'.svg':'';
 
     const content=`
         <div class="applicationTop">
             <div class="applicationIcon" aria-hidden="true">
-                ${esc(initial)}
+                ${iconURL?`<img src="${esc(iconURL)}" alt="" loading="lazy" onerror="this.remove();this.parentElement.querySelector('.applicationFallback').hidden=false"><span class="applicationFallback" hidden>${esc(initial)}</span>`:`<span class="applicationFallback">${esc(initial)}</span>`}
             </div>
 
             ${url?`
@@ -701,5 +702,42 @@ $('kiosk').onclick=()=>{document.body.classList.toggle('kiosk');history.replaceS
 document.addEventListener('visibilitychange',()=>document.hidden?clearInterval(timer):start());
 function applyTheme(t){const v=t?.values||{},r=document.documentElement;for(const [k,css] of Object.entries({bg:'--bg',surface:'--surface',text:'--text',muted:'--muted',accent:'--accent',border:'--border',radius:'--radius',gap:'--gap',padding:'--card-padding',blur:'--card-blur',overlay:'--overlay'}))if(v[k]!=null)r.style.setProperty(css,v[k]);if(v.card_opacity!=null)r.style.setProperty('--card-opacity',v.card_opacity);if(v.background_image)r.style.setProperty('--bg-image',`url("${String(v.background_image).replace(/["\\]/g,'')}")`)}async function loadTheme(){try{applyTheme((await api(`/api/v1/themes?page=${encodeURIComponent(slug)}`)).theme)}catch{}}
 $('theme').onclick=async()=>{const ps=await api('/api/v1/themes/presets');$('modalBody').innerHTML=`<h2>Apariencia</h2>${Object.entries(ps.presets||{}).map(([k,x])=>`<button class="preset" data-preset="${k}">${esc(x.name)}</button>`).join('')}`;$('modal').showModal();$('modalBody').querySelectorAll('.preset').forEach(b=>b.onclick=async()=>{const x=ps.presets[b.dataset.preset];await api(`/api/v1/themes?page=${encodeURIComponent(slug)}`,{method:'PUT',body:JSON.stringify(x)});$('modal').close();loadTheme()})};
-$('discover').onclick=async()=>{try{const j=await api('/api/v1/discovery');$('modalBody').innerHTML='<h2>Docker Discovery</h2>'+JSON.stringify(j,null,2);$('modal').showModal()}catch(e){alert(e.message)}};
+$('discover').onclick=async()=>{
+    try{
+        const j=await api('/api/v1/discovery/docker');
+        const services=j.services||[];
+        $('modalBody').innerHTML=`
+            <div class="discoveryHeader">
+                <div><h2>Contenedores Docker</h2><p>Elige los servicios que quieres mostrar en tu dashboard.</p></div>
+                <span class="discoveryCount">${services.length}</span>
+            </div>
+            <div class="discoveryList">
+            ${services.map((s,i)=>{
+                const hint=String(s.suggested_icon||s.image||s.suggested_name||'').toLowerCase();
+                const slug=hint.replace(/^.*\\//,'').replace(/[:@].*$/,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+                const icon=slug?'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/'+encodeURIComponent(slug)+'.svg':'';
+                const initial=String(s.suggested_name||s.service||s.container_name||'D').charAt(0).toUpperCase();
+                return `<article class="discoveryCard">
+                    <div class="discoveryIcon">${icon?`<img src="${esc(icon)}" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent='${esc(initial)}'">`:esc(initial)}</div>
+                    <div class="discoveryInfo">
+                        <strong>${esc(s.suggested_name||s.service||s.container_name||'Servicio')}</strong>
+                        <span>${esc(s.image||'')}</span>
+                        <small><i class="stateDot ${String(s.state||'').toLowerCase()}"></i>${esc(s.state||'desconocido')}${s.suggested_url?' · '+esc(s.suggested_url):''}</small>
+                    </div>
+                    <button class="discoveryAdd primaryButton" data-key="${esc(s.stable_key)}" ${!s.suggested_url?'disabled title="Este contenedor no publica un puerto HTTP utilizable"':''}>Agregar</button>
+                </article>`;
+            }).join('')||'<div class="dashboardEmpty"><strong>No se encontraron contenedores</strong><span>Verifica la conexión con Docker.</span></div>'}
+            </div>`;
+        $('modal').showModal();
+        $('modalBody').querySelectorAll('.discoveryAdd').forEach(b=>b.onclick=async()=>{
+            b.disabled=true;b.textContent='Agregando...';
+            try{
+                await api('/api/v1/discovery/adopt',{method:'POST',body:JSON.stringify({stable_key:b.dataset.key,page_id:pageId})});
+                b.textContent='Agregado'; b.classList.add('added');
+                $('status').textContent='Contenedor agregado';
+                await refresh();
+            }catch(err){b.disabled=false;b.textContent='Agregar';alert(err.message)}
+        });
+    }catch(e){alert(e.message)}
+};
 loadPages().then(start);
