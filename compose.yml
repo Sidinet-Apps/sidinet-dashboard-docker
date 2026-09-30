@@ -15,7 +15,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "${SIDINET_PORT:-8585}:8080"
+      - "${SIDINET_PORT:-8088}:8080"
 
     environment:
       PUID: "${PUID:-1000}"

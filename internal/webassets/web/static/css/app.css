@@ -1120,3 +1120,25 @@ body.editingMode .dashboardGridHeader::after {
         grid-template-columns: 1fr;
     }
 }
+
+/* v1.1.1 launcher and Docker picker */
+.applicationCard{min-height:154px;background:rgba(17,27,44,.72);border-color:rgba(255,255,255,.07)}
+.applicationCard:hover{transform:translateY(-4px) scale(1.01);box-shadow:0 20px 50px rgba(0,0,0,.28)}
+.applicationIcon{width:58px;height:58px;flex-basis:58px;padding:9px;background:rgba(255,255,255,.94);border-radius:16px;box-shadow:0 10px 28px rgba(0,0,0,.24)}
+.applicationIcon img{display:block;width:100%;height:100%;object-fit:contain}
+.applicationFallback{display:grid;place-items:center;width:100%;height:100%;color:var(--accent);font-size:1.35rem;font-weight:800}
+.applicationInfo strong{font-size:1.05rem}.applicationInfo span{line-height:1.35}
+.discoveryHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px}
+.discoveryHeader h2{margin:0 0 5px}.discoveryHeader p{margin:0;color:var(--muted);font-size:.86rem}
+.discoveryCount{min-width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:rgba(77,141,255,.16);color:#8db6ff;font-weight:700}
+.discoveryList{display:grid;gap:10px;max-height:62vh;overflow:auto;padding-right:3px}
+.discoveryCard{display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:14px;padding:13px;border:1px solid var(--border);border-radius:15px;background:rgba(255,255,255,.035)}
+.discoveryCard:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.13)}
+.discoveryIcon{width:54px;height:54px;display:grid;place-items:center;padding:8px;border-radius:14px;background:#f7f8fa;color:#172033;font-size:1.2rem;font-weight:800}
+.discoveryIcon img{width:100%;height:100%;object-fit:contain}
+.discoveryInfo{min-width:0;display:grid;gap:3px}.discoveryInfo strong{font-size:.94rem}.discoveryInfo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:.74rem}
+.discoveryInfo small{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.7rem;overflow-wrap:anywhere}
+.stateDot{width:7px;height:7px;border-radius:50%;background:#8b949e}.stateDot.running{background:#45c978}.stateDot.exited,.stateDot.dead{background:#ef6464}
+.discoveryAdd{min-width:82px}.discoveryAdd.added{background:#287a4b}
+.discoveryAdd:disabled{opacity:.48;cursor:not-allowed}
+@media(max-width:620px){.discoveryCard{grid-template-columns:46px minmax(0,1fr)}.discoveryIcon{width:46px;height:46px}.discoveryAdd{grid-column:1/-1;width:100%}}

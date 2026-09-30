@@ -174,8 +174,24 @@ func (s *Server) pages(w http.ResponseWriter, r *http.Request) {
 	s.json(w, 200, map[string]any{"pages": rows})
 }
 func (s *Server) applications(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPut {
+		var in struct {
+			ID int64 `json:"id"`
+			Name, URL, Description, IconType, IconValue, OpenMode string
+		}
+		if json.NewDecoder(http.MaxBytesReader(w, r.Body, 32<<10)).Decode(&in) != nil || in.ID < 1 || strings.TrimSpace(in.Name) == "" || !(strings.HasPrefix(in.URL, "http://") || strings.HasPrefix(in.URL, "https://")) {
+			s.json(w, 400, map[string]any{"error": "invalid application"})
+			return
+		}
+		if in.IconType == "" { in.IconType = "auto" }
+		if in.OpenMode == "" { in.OpenMode = "new_tab" }
+		q := `UPDATE applications SET name=`+database.Quote(in.Name)+`,url=`+database.Quote(in.URL)+`,description=`+database.Quote(in.Description)+`,icon_type=`+database.Quote(in.IconType)+`,icon_value=`+database.Quote(in.IconValue)+`,open_mode=`+database.Quote(in.OpenMode)+`,updated_at=CURRENT_TIMESTAMP WHERE id=`+strconv.FormatInt(in.ID,10)+`;`
+		if e := s.db.Exec(q); e != nil { s.json(w,500,map[string]any{"error":e.Error()}); return }
+		s.json(w,200,map[string]any{"ok":true})
+		return
+	}
 	if r.Method == http.MethodGet {
-		v, e := s.db.QueryText(`SELECT COALESCE(json_group_array(json_object('id',id,'name',name,'url',url,'description',COALESCE(description,''),'open_mode',open_mode)), '[]') FROM (SELECT * FROM applications WHERE enabled=1 ORDER BY name);`)
+		v, e := s.db.QueryText(`SELECT COALESCE(json_group_array(json_object('id',id,'name',name,'url',url,'description',COALESCE(description,''),'open_mode',open_mode,'icon_type',icon_type,'icon_value',COALESCE(icon_value,''),'source_type',source_type)), '[]') FROM (SELECT * FROM applications WHERE enabled=1 ORDER BY name);`)
 		if e != nil {
 			s.json(w, 500, map[string]any{"error": e.Error()})
 			return
@@ -271,9 +287,24 @@ func (s *Server) widgetAction(w http.ResponseWriter, r *http.Request) {
 	}
 	switch {
 	case r.Method == http.MethodDelete:
+		appID, _ := s.db.QueryText(`SELECT CASE WHEN widget_type='application.shortcut' THEN COALESCE(json_extract(config,'$.application_id'),'') ELSE '' END FROM widgets WHERE id=`+strconv.FormatInt(id,10)+`;`)
 		err = s.db.Exec(`DELETE FROM widgets WHERE id=` + strconv.FormatInt(id, 10) + `;`)
+		if err == nil && appID != "" {
+			refs, _ := s.db.QueryText(`SELECT COUNT(*) FROM widgets WHERE widget_type='application.shortcut' AND json_extract(config,'$.application_id')=`+appID+`;`)
+			if refs == "0" {
+				sourceID, _ := s.db.QueryText(`SELECT COALESCE(source_id,'') FROM applications WHERE id=`+appID+`;`)
+				monitorID, _ := s.db.QueryText(`SELECT COALESCE(CAST(monitor_id AS TEXT),'') FROM applications WHERE id=`+appID+`;`)
+				_ = s.db.Exec(`DELETE FROM applications WHERE id=`+appID+`;`)
+				if monitorID != "" && monitorID != "0" { _ = s.db.Exec(`DELETE FROM monitors WHERE id=`+monitorID+`;`) }
+				if sourceID != "" { _ = s.db.Exec(`UPDATE docker_services SET dashboard_status='AVAILABLE',updated_at=CURRENT_TIMESTAMP WHERE stable_key=`+database.Quote(sourceID)+`;`) }
+			}
+		}
 	case r.Method == http.MethodPost && action == "duplicate":
-		err = s.db.Exec(`INSERT INTO widgets(page_id,widget_type,provider_type,title,subtitle,enabled,refresh_mode,refresh_interval,visibility,style_override,config) SELECT page_id,widget_type,provider_type,title||' copia',subtitle,enabled,refresh_mode,refresh_interval,visibility,style_override,config FROM widgets WHERE id=` + strconv.FormatInt(id, 10) + `;`)
+		err = s.db.Exec(`INSERT INTO widgets(page_id,widget_type,provider_type,title,subtitle,enabled,refresh_mode,refresh_interval,visibility,style_override,config,parent_widget_id) SELECT page_id,widget_type,provider_type,title||' copia',subtitle,enabled,refresh_mode,refresh_interval,visibility,style_override,config,parent_widget_id FROM widgets WHERE id=` + strconv.FormatInt(id, 10) + `;`)
+		if err == nil {
+			newID, _ := s.db.QueryText(`SELECT CAST(last_insert_rowid() AS TEXT);`)
+			err = s.db.Exec(`INSERT INTO widget_layouts(widget_id,breakpoint,x,y,width,height,min_width,min_height,max_width,max_height) SELECT `+newID+`,breakpoint,x,y+1,width,height,min_width,min_height,max_width,max_height FROM widget_layouts WHERE widget_id=`+strconv.FormatInt(id,10)+`;`)
+		}
 	case r.Method == http.MethodPost && (action == "hide" || action == "show"):
 		val := "0"
 		if action == "show" {
@@ -381,7 +412,7 @@ func (s *Server) runtimePage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	q := `SELECT COALESCE(json_group_array(json_object('id',w.id,'type',w.widget_type,'provider',COALESCE(w.provider_type,''),'title',COALESCE(w.title,''),'config',json(w.config),'parent_widget_id',COALESCE(w.parent_widget_id,0),'layout',json_object('x',COALESCE(l.x,0),'y',COALESCE(l.y,0),'w',COALESCE(l.width,3),'h',COALESCE(l.height,2)))), '[]') FROM widgets w JOIN pages p ON p.id=w.page_id LEFT JOIN widget_layouts l ON l.widget_id=w.id AND l.breakpoint=` + database.Quote(bp) + ` WHERE p.slug=` + database.Quote(slug) + ` AND w.enabled=1;`
+	q := `SELECT COALESCE(json_group_array(json_object('id',w.id,'type',w.widget_type,'provider',COALESCE(w.provider_type,''),'title',COALESCE(w.title,''),'subtitle',COALESCE(w.subtitle,''),'config',json(w.config),'parent_widget_id',COALESCE(w.parent_widget_id,0),'layout',json_object('x',COALESCE(l.x,0),'y',COALESCE(l.y,0),'w',COALESCE(l.width,3),'h',COALESCE(l.height,2)))), '[]') FROM widgets w JOIN pages p ON p.id=w.page_id LEFT JOIN widget_layouts l ON l.widget_id=w.id AND l.breakpoint=` + database.Quote(bp) + ` WHERE p.slug=` + database.Quote(slug) + ` AND w.enabled=1;`
 	wj, err := s.db.QueryText(q)
 	if err != nil {
 		s.json(w, 500, map[string]any{"error": err.Error()})
@@ -395,7 +426,7 @@ func (s *Server) runtimePage(w http.ResponseWriter, r *http.Request) {
 		if x["type"] == "application.shortcut" {
 			if cfg, ok := x["config"].(map[string]any); ok {
 				if aid, ok := cfg["application_id"].(float64); ok {
-					aj, _ := s.db.QueryText(`SELECT json_object('id',id,'name',name,'url',url,'description',COALESCE(description,''),'open_mode',open_mode,'monitor_id',COALESCE(monitor_id,0)) FROM applications WHERE enabled=1 AND id=` + strconv.FormatInt(int64(aid), 10) + ` LIMIT 1;`)
+					aj, _ := s.db.QueryText(`SELECT json_object('id',id,'name',name,'url',url,'description',COALESCE(description,''),'open_mode',open_mode,'monitor_id',COALESCE(monitor_id,0),'icon_type',icon_type,'icon_value',COALESCE(icon_value,''),'source_type',source_type) FROM applications WHERE enabled=1 AND id=` + strconv.FormatInt(int64(aid), 10) + ` LIMIT 1;`)
 					var app any
 					if aj != "" {
 						_ = json.Unmarshal([]byte(aj), &app)
@@ -552,14 +583,16 @@ func (s *Server) discoveryAdopt(w http.ResponseWriter, r *http.Request) {
 		s.json(w, 400, map[string]any{"error": "invalid adoption"})
 		return
 	}
-	raw, e := s.db.QueryText(`SELECT COALESCE(json_object('name',service_name,'url',COALESCE(suggested_url,'')),'') FROM docker_services WHERE stable_key=` + database.Quote(in.StableKey) + `;`)
+	raw, e := s.db.QueryText(`SELECT COALESCE(json_object('name',service_name,'url',COALESCE(suggested_url,''),'icon',COALESCE(suggested_icon,''),'image',COALESCE(image,'')),'') FROM docker_services WHERE stable_key=` + database.Quote(in.StableKey) + `;`)
 	if e != nil || raw == "" {
 		s.json(w, 404, map[string]any{"error": "service not found"})
 		return
 	}
 	var d struct {
-		Name string `json:"name"`
-		URL  string `json:"url"`
+		Name  string `json:"name"`
+		URL   string `json:"url"`
+		Icon  string `json:"icon"`
+		Image string `json:"image"`
 	}
 	_ = json.Unmarshal([]byte(raw), &d)
 	if !discovery.ValidSuggestedURL(d.URL) {
@@ -569,7 +602,7 @@ func (s *Server) discoveryAdopt(w http.ResponseWriter, r *http.Request) {
 	source := "docker:" + in.StableKey
 	appID, _ := s.db.QueryText(`SELECT COALESCE(CAST(id AS TEXT),'') FROM applications WHERE source_type='docker' AND source_id=` + database.Quote(in.StableKey) + ` LIMIT 1;`)
 	if appID == "" {
-		if e := s.db.Exec(`INSERT INTO applications(name,url,source_type,source_id) VALUES(` + database.Quote(d.Name) + `,` + database.Quote(d.URL) + `,'docker',` + database.Quote(in.StableKey) + `);`); e != nil {
+		if e := s.db.Exec(`INSERT INTO applications(name,url,icon_type,icon_value,source_type,source_id) VALUES(` + database.Quote(d.Name) + `,` + database.Quote(d.URL) + `,'auto',` + database.Quote(firstNonEmptyString(d.Icon, d.Image)) + `,'docker',` + database.Quote(in.StableKey) + `);`); e != nil {
 			s.json(w, 500, map[string]any{"error": e.Error()})
 			return
 		}
@@ -646,7 +679,7 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "same-origin")
 		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data: https://cdn.jsdelivr.net; style-src 'self'; script-src 'self'; connect-src 'self'")
 		next.ServeHTTP(sw, r)
 		if sw.status >= 500 {
 			s.errors.Add(1)
@@ -773,4 +806,11 @@ func (s *Server) recoveryDiagnostics(w http.ResponseWriter, r *http.Request) {
 		}
 		return 0
 	}(), "uploads_bytes": ups, "monitors": mon, "docker_services": svc, "docker_enabled": s.cfg.DockerEnabled && !s.cfg.SafeMode, "storage_paths": s.cfg.StoragePaths})
+}
+
+func firstNonEmptyString(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" { return value }
+	}
+	return ""
 }

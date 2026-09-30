@@ -12,7 +12,7 @@ function value(w){
     if(w.type==='application.shortcut'){
         return w.application
             ? `<a class="launch" href="${esc(w.application.url)}" target="_blank" rel="noopener">Abrir</a>${monitor(w.application.monitor)}`
-            : 'AplicaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n';
+            : 'Aplicación';
     }
 
     if(w.type==='information.iframe'){
@@ -63,7 +63,7 @@ function value(w){
 
         case 'network.internet':
             if(d.online === true) return 'Conectado';
-            if(d.online === false) return 'Sin conexiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n';
+            if(d.online === false) return 'Sin conexión';
             return 'No disponible';
 
         case 'storage.disks':
@@ -185,14 +185,15 @@ function applicationBody(w){
             ? '_self'
             : '_blank';
 
-    const initial=String(
-        w.title||app.name||'A'
-    ).trim().charAt(0).toUpperCase();
+    const initial=String(w.title||app.name||'A').trim().charAt(0).toUpperCase();
+    const iconHint=String(app.icon_value||app.name||'').toLowerCase();
+    const iconSlug=iconHint.replace(/^.*\//,'').replace(/[:@].*$/,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    const iconURL=iconSlug?'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/'+encodeURIComponent(iconSlug)+'.svg':'';
 
     const content=`
         <div class="applicationTop">
             <div class="applicationIcon" aria-hidden="true">
-                ${esc(initial)}
+                ${iconURL?`<img src="${esc(iconURL)}" alt="" loading="lazy" data-icon-fallback="application"><span class="applicationFallback" hidden>${esc(initial)}</span>`:`<span class="applicationFallback">${esc(initial)}</span>`}
             </div>
 
             ${url?`
@@ -462,11 +463,54 @@ $('cancel').onclick=()=>{
 
 $('breakpoint').onchange=refresh;
 $('undo').onclick=()=>{if(!undoStack.length)return;redoStack.push(clone(widgets));widgets=undoStack.pop();render()};$('redo').onclick=()=>{if(!redoStack.length)return;undoStack.push(clone(widgets));widgets=redoStack.pop();render()};
-$('grid').addEventListener('pointerdown',e=>{if(!editing)return;const card=e.target.closest('.card[data-id]');if(!card)return;const w=widgets.find(x=>String(x.id)===card.dataset.id);if(!w)return;pushUndo();const l=w.layout;drag={w,card,sx:e.clientX,sy:e.clientY,start:clone(l),resize:!!e.target.dataset.resize};card.classList.add('dragging');card.setPointerCapture(e.pointerId)});
+$('grid').addEventListener('pointerdown',e=>{if(!editing)return;if(e.target.closest('.cardEditTools,button,a,input,select,textarea'))return;const card=e.target.closest('.card[data-id]');if(!card)return;const w=widgets.find(x=>String(x.id)===card.dataset.id);if(!w)return;pushUndo();const l=w.layout;drag={w,card,sx:e.clientX,sy:e.clientY,start:clone(l),resize:!!e.target.dataset.resize};card.classList.add('dragging');card.setPointerCapture(e.pointerId)});
 $('grid').addEventListener('pointermove',e=>{if(!drag)return;const rect=$('grid').getBoundingClientRect(),cw=rect.width/cols[bp()],rh=64+parseFloat(getComputedStyle($('grid')).gap||0),dx=Math.round((e.clientX-drag.sx)/cw),dy=Math.round((e.clientY-drag.sy)/rh),l=drag.w.layout,c=cols[bp()];if(drag.resize){l.w=Math.max(1,Math.min(c-drag.start.x,drag.start.w+dx));l.h=Math.max(1,drag.start.h+dy)}else{l.x=Math.max(0,Math.min(c-l.w,drag.start.x+dx));l.y=Math.max(0,drag.start.y+dy)}render()});
 $('grid').addEventListener('pointerup',e=>{if(drag){drag.card.classList.remove('dragging');drag=null}});
-$('grid').addEventListener('click',async e=>{const b=e.target.closest('button[data-a]');if(!b)return;const w=widgets.find(x=>String(x.id)===b.closest('.card').dataset.id),a=b.dataset.a;try{if(a==='props')return properties(w);if(a==='duplicate')await api(`/api/v1/widgets/${w.id}/duplicate`,{method:'POST'});if(a==='hide')await api(`/api/v1/widgets/${w.id}/hide`,{method:'POST'});if(a==='delete'&&confirm('ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿Eliminar este widget?'))await api(`/api/v1/widgets/${w.id}`,{method:'DELETE'});await refresh()}catch(x){alert(x.message)}});
-function properties(w){const groups=widgets.filter(x=>x.type==='layout.group'&&x.id!==w.id);$('modalBody').innerHTML=`<h2>Propiedades</h2><form id="propForm"><input name="title" value="${esc(w.title||'')}" placeholder="TÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo"><input name="subtitle" value="${esc(w.subtitle||'')}" placeholder="SubtÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo"><label>Grupo<select name="parent"><option value="0">Ninguno</option>${groups.map(g=>`<option value="${g.id}" ${w.parent_widget_id===g.id?'selected':''}>${esc(g.title)}</option>`).join('')}</select></label>${['information.iframe','information.json'].includes(w.type)?`<textarea name="config" rows="6">${esc(JSON.stringify(w.config||{},null,2))}</textarea>`:''}<button>Aplicar</button></form>`;$('modal').showModal();$('propForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);let config=w.config||{};try{if(f.get('config'))config=JSON.parse(f.get('config'));await api(`/api/v1/widgets/${w.id}`,{method:'PUT',body:JSON.stringify({title:f.get('title'),subtitle:f.get('subtitle'),parent_widget_id:Number(f.get('parent')),config})});$('modal').close();refresh()}catch(x){alert(x.message)}}}
+$('grid').addEventListener('click',async e=>{const b=e.target.closest('button[data-a]');if(!b)return;const w=widgets.find(x=>String(x.id)===b.closest('.card').dataset.id),a=b.dataset.a;try{if(a==='props')return properties(w);if(a==='duplicate')await api(`/api/v1/widgets/${w.id}/duplicate`,{method:'POST'});if(a==='hide')await api(`/api/v1/widgets/${w.id}/hide`,{method:'POST'});if(a==='delete'&&confirm('¿Eliminar este widget?'))await api(`/api/v1/widgets/${w.id}`,{method:'DELETE'});await refresh()}catch(x){alert(x.message)}});
+function properties(w){
+    const groups=widgets.filter(x=>x.type==='layout.group'&&x.id!==w.id);
+    const app=w.application||null;
+    $('modalBody').innerHTML=`
+        <h2>Editar</h2>
+        <form id="propForm" class="applicationForm">
+            <label><span>Título de la tarjeta</span><input name="title" value="${esc(w.title||'')}" required></label>
+            <label><span>Subtítulo</span><input name="subtitle" value="${esc(w.subtitle||'')}"></label>
+            ${app?`
+                <label><span>Nombre de la aplicación</span><input name="app_name" value="${esc(app.name||'')}" required></label>
+                <label><span>URL</span><input name="app_url" type="url" value="${esc(app.url||'')}" required></label>
+                <label><span>Descripción</span><textarea name="app_description" rows="3">${esc(app.description||'')}</textarea></label>
+                <label><span>Icono</span><input name="icon_value" value="${esc(app.icon_value||'')}" placeholder="Ej. jellyfin, portainer o imagen Docker"></label>
+                <label><span>Abrir</span><select name="open_mode"><option value="new_tab" ${app.open_mode!=='same'?'selected':''}>Nueva pestaña</option><option value="same" ${app.open_mode==='same'?'selected':''}>Misma pestaña</option></select></label>
+            `:''}
+            <label><span>Grupo</span><select name="parent"><option value="0">Ninguno</option>${groups.map(g=>`<option value="${g.id}" ${w.parent_widget_id===g.id?'selected':''}>${esc(g.title)}</option>`).join('')}</select></label>
+            ${['information.iframe','information.json'].includes(w.type)?`<label><span>Configuración JSON</span><textarea name="config" rows="6">${esc(JSON.stringify(w.config||{},null,2))}</textarea></label>`:''}
+            <div class="formActions"><button id="propCancel" type="button">Cancelar</button><button class="primaryButton" type="submit">Guardar cambios</button></div>
+        </form>`;
+    $('modal').showModal();
+    $('propCancel').onclick=()=>$('modal').close();
+    $('propForm').onsubmit=async e=>{
+        e.preventDefault();
+        const f=new FormData(e.target);
+        let config=w.config||{};
+        try{
+            if(f.get('config'))config=JSON.parse(f.get('config'));
+            if(app){
+                await api('/api/v1/applications',{method:'PUT',body:JSON.stringify({
+                    id:Number(app.id),name:f.get('app_name'),url:f.get('app_url'),
+                    description:f.get('app_description'),icon_type:'auto',
+                    icon_value:f.get('icon_value'),open_mode:f.get('open_mode')
+                })});
+            }
+            await api(`/api/v1/widgets/${w.id}`,{method:'PUT',body:JSON.stringify({
+                title:f.get('title'),subtitle:f.get('subtitle'),
+                parent_widget_id:Number(f.get('parent')),config
+            })});
+            $('modal').close();
+            $('status').textContent='Cambios guardados';
+            await refresh();
+        }catch(x){alert(x.message)}
+    };
+}
 $('save').onclick=async()=>{
     try{
         await api('/api/v1/layouts',{
@@ -492,7 +536,7 @@ $('save').onclick=async()=>{
         $('status').textContent=e.message;
     }
 };
-$('addPage').onclick=async()=>{const name=prompt('Nombre de la nueva pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡gina');if(!name)return;const j=await api('/api/v1/pages',{method:'POST',body:JSON.stringify({name})});slug=j.slug;await loadPages();start()};
+$('addPage').onclick=async()=>{const name=prompt('Nombre de la nueva página');if(!name)return;const j=await api('/api/v1/pages',{method:'POST',body:JSON.stringify({name})});slug=j.slug;await loadPages();start()};
 $('store').onclick=async()=>{
     $('modalBody').innerHTML=`
         <div class="addPanel">
@@ -701,5 +745,54 @@ $('kiosk').onclick=()=>{document.body.classList.toggle('kiosk');history.replaceS
 document.addEventListener('visibilitychange',()=>document.hidden?clearInterval(timer):start());
 function applyTheme(t){const v=t?.values||{},r=document.documentElement;for(const [k,css] of Object.entries({bg:'--bg',surface:'--surface',text:'--text',muted:'--muted',accent:'--accent',border:'--border',radius:'--radius',gap:'--gap',padding:'--card-padding',blur:'--card-blur',overlay:'--overlay'}))if(v[k]!=null)r.style.setProperty(css,v[k]);if(v.card_opacity!=null)r.style.setProperty('--card-opacity',v.card_opacity);if(v.background_image)r.style.setProperty('--bg-image',`url("${String(v.background_image).replace(/["\\]/g,'')}")`)}async function loadTheme(){try{applyTheme((await api(`/api/v1/themes?page=${encodeURIComponent(slug)}`)).theme)}catch{}}
 $('theme').onclick=async()=>{const ps=await api('/api/v1/themes/presets');$('modalBody').innerHTML=`<h2>Apariencia</h2>${Object.entries(ps.presets||{}).map(([k,x])=>`<button class="preset" data-preset="${k}">${esc(x.name)}</button>`).join('')}`;$('modal').showModal();$('modalBody').querySelectorAll('.preset').forEach(b=>b.onclick=async()=>{const x=ps.presets[b.dataset.preset];await api(`/api/v1/themes?page=${encodeURIComponent(slug)}`,{method:'PUT',body:JSON.stringify(x)});$('modal').close();loadTheme()})};
-$('discover').onclick=async()=>{try{const j=await api('/api/v1/discovery');$('modalBody').innerHTML='<h2>Docker Discovery</h2>'+JSON.stringify(j,null,2);$('modal').showModal()}catch(e){alert(e.message)}};
+$('discover').onclick=async()=>{
+    try{
+        const j=await api('/api/v1/discovery/docker');
+        const services=j.services||[];
+        $('modalBody').innerHTML=`
+            <div class="discoveryHeader">
+                <div><h2>Contenedores Docker</h2><p>Elige los servicios que quieres mostrar en tu dashboard.</p></div>
+                <span class="discoveryCount">${services.length}</span>
+            </div>
+            <div class="discoveryList">
+            ${services.map((s,i)=>{
+                const hint=String(s.suggested_icon||s.image||s.suggested_name||'').toLowerCase();
+                const slug=(hint.split('/').pop()||'').replace(/[:@].*$/,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+                const icon=slug?'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/'+encodeURIComponent(slug)+'.svg':'';
+                const initial=String(s.suggested_name||s.service||s.container_name||'D').charAt(0).toUpperCase();
+                return `<article class="discoveryCard">
+                    <div class="discoveryIcon">${icon?`<img src="${esc(icon)}" alt="" loading="lazy" data-icon-fallback="docker" data-fallback="${esc(initial)}">`:esc(initial)}</div>
+                    <div class="discoveryInfo">
+                        <strong>${esc(s.suggested_name||s.service||s.container_name||'Servicio')}</strong>
+                        <span>${esc(s.image||'')}</span>
+                        <small><i class="stateDot ${String(s.state||'').toLowerCase()}"></i>${esc(s.state||'desconocido')}${s.suggested_url?' · '+esc(s.suggested_url):''}</small>
+                    </div>
+                    <button class="discoveryAdd primaryButton" data-key="${esc(s.stable_key)}" ${!s.suggested_url?'disabled title="Este contenedor no publica un puerto HTTP utilizable"':''}>Agregar</button>
+                </article>`;
+            }).join('')||'<div class="dashboardEmpty"><strong>No se encontraron contenedores</strong><span>Verifica la conexión con Docker.</span></div>'}
+            </div>`;
+        $('modal').showModal();
+        $('modalBody').querySelectorAll('.discoveryAdd').forEach(b=>b.onclick=async()=>{
+            b.disabled=true;b.textContent='Agregando...';
+            try{
+                await api('/api/v1/discovery/adopt',{method:'POST',body:JSON.stringify({stable_key:b.dataset.key,page_id:pageId})});
+                b.textContent='Agregado'; b.classList.add('added');
+                $('status').textContent='Contenedor agregado';
+                await refresh();
+            }catch(err){b.disabled=false;b.textContent='Agregar';alert(err.message)}
+        });
+    }catch(e){alert(e.message)}
+};
+document.addEventListener('error',e=>{
+    const img=e.target;
+    if(!(img instanceof HTMLImageElement)||!img.dataset.iconFallback)return;
+    const parent=img.parentElement;
+    img.remove();
+    if(img.dataset.iconFallback==='application'){
+        const fallback=parent?.querySelector('.applicationFallback');
+        if(fallback)fallback.hidden=false;
+    }else if(parent){
+        parent.textContent=img.dataset.fallback||'D';
+    }
+},true);
 loadPages().then(start);
