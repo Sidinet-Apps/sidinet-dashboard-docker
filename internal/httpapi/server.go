@@ -410,7 +410,7 @@ func (s *Server) runtimePage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	q := `SELECT COALESCE(json_group_array(json_object('id',w.id,'type',w.widget_type,'provider',COALESCE(w.provider_type,''),'title',COALESCE(w.title,''),'config',json(w.config),'parent_widget_id',COALESCE(w.parent_widget_id,0),'layout',json_object('x',COALESCE(l.x,0),'y',COALESCE(l.y,0),'w',COALESCE(l.width,3),'h',COALESCE(l.height,2)))), '[]') FROM widgets w JOIN pages p ON p.id=w.page_id LEFT JOIN widget_layouts l ON l.widget_id=w.id AND l.breakpoint=` + database.Quote(bp) + ` WHERE p.slug=` + database.Quote(slug) + ` AND w.enabled=1;`
+	q := `SELECT COALESCE(json_group_array(json_object('id',w.id,'type',w.widget_type,'provider',COALESCE(w.provider_type,''),'title',COALESCE(w.title,''),'subtitle',COALESCE(w.subtitle,''),'config',json(w.config),'parent_widget_id',COALESCE(w.parent_widget_id,0),'layout',json_object('x',COALESCE(l.x,0),'y',COALESCE(l.y,0),'w',COALESCE(l.width,3),'h',COALESCE(l.height,2)))), '[]') FROM widgets w JOIN pages p ON p.id=w.page_id LEFT JOIN widget_layouts l ON l.widget_id=w.id AND l.breakpoint=` + database.Quote(bp) + ` WHERE p.slug=` + database.Quote(slug) + ` AND w.enabled=1;`
 	wj, err := s.db.QueryText(q)
 	if err != nil {
 		s.json(w, 500, map[string]any{"error": err.Error()})
