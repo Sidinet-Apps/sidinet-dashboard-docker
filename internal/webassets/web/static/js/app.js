@@ -463,11 +463,53 @@ $('cancel').onclick=()=>{
 
 $('breakpoint').onchange=refresh;
 $('undo').onclick=()=>{if(!undoStack.length)return;redoStack.push(clone(widgets));widgets=undoStack.pop();render()};$('redo').onclick=()=>{if(!redoStack.length)return;undoStack.push(clone(widgets));widgets=redoStack.pop();render()};
-$('grid').addEventListener('pointerdown',e=>{if(!editing)return;const card=e.target.closest('.card[data-id]');if(!card)return;const w=widgets.find(x=>String(x.id)===card.dataset.id);if(!w)return;pushUndo();const l=w.layout;drag={w,card,sx:e.clientX,sy:e.clientY,start:clone(l),resize:!!e.target.dataset.resize};card.classList.add('dragging');card.setPointerCapture(e.pointerId)});
+$('grid').addEventListener('pointerdown',e=>{if(!editing)return;if(e.target.closest('.cardEditTools,button,a,input,select,textarea'))return;const card=e.target.closest('.card[data-id]');if(!card)return;const w=widgets.find(x=>String(x.id)===card.dataset.id);if(!w)return;pushUndo();const l=w.layout;drag={w,card,sx:e.clientX,sy:e.clientY,start:clone(l),resize:!!e.target.dataset.resize};card.classList.add('dragging');card.setPointerCapture(e.pointerId)});
 $('grid').addEventListener('pointermove',e=>{if(!drag)return;const rect=$('grid').getBoundingClientRect(),cw=rect.width/cols[bp()],rh=64+parseFloat(getComputedStyle($('grid')).gap||0),dx=Math.round((e.clientX-drag.sx)/cw),dy=Math.round((e.clientY-drag.sy)/rh),l=drag.w.layout,c=cols[bp()];if(drag.resize){l.w=Math.max(1,Math.min(c-drag.start.x,drag.start.w+dx));l.h=Math.max(1,drag.start.h+dy)}else{l.x=Math.max(0,Math.min(c-l.w,drag.start.x+dx));l.y=Math.max(0,drag.start.y+dy)}render()});
 $('grid').addEventListener('pointerup',e=>{if(drag){drag.card.classList.remove('dragging');drag=null}});
 $('grid').addEventListener('click',async e=>{const b=e.target.closest('button[data-a]');if(!b)return;const w=widgets.find(x=>String(x.id)===b.closest('.card').dataset.id),a=b.dataset.a;try{if(a==='props')return properties(w);if(a==='duplicate')await api(`/api/v1/widgets/${w.id}/duplicate`,{method:'POST'});if(a==='hide')await api(`/api/v1/widgets/${w.id}/hide`,{method:'POST'});if(a==='delete'&&confirm('ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿Eliminar este widget?'))await api(`/api/v1/widgets/${w.id}`,{method:'DELETE'});await refresh()}catch(x){alert(x.message)}});
-function properties(w){const groups=widgets.filter(x=>x.type==='layout.group'&&x.id!==w.id);$('modalBody').innerHTML=`<h2>Propiedades</h2><form id="propForm"><input name="title" value="${esc(w.title||'')}" placeholder="TÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo"><input name="subtitle" value="${esc(w.subtitle||'')}" placeholder="SubtÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo"><label>Grupo<select name="parent"><option value="0">Ninguno</option>${groups.map(g=>`<option value="${g.id}" ${w.parent_widget_id===g.id?'selected':''}>${esc(g.title)}</option>`).join('')}</select></label>${['information.iframe','information.json'].includes(w.type)?`<textarea name="config" rows="6">${esc(JSON.stringify(w.config||{},null,2))}</textarea>`:''}<button>Aplicar</button></form>`;$('modal').showModal();$('propForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);let config=w.config||{};try{if(f.get('config'))config=JSON.parse(f.get('config'));await api(`/api/v1/widgets/${w.id}`,{method:'PUT',body:JSON.stringify({title:f.get('title'),subtitle:f.get('subtitle'),parent_widget_id:Number(f.get('parent')),config})});$('modal').close();refresh()}catch(x){alert(x.message)}}}
+function properties(w){
+    const groups=widgets.filter(x=>x.type==='layout.group'&&x.id!==w.id);
+    const app=w.application||null;
+    $('modalBody').innerHTML=`
+        <h2>Editar</h2>
+        <form id="propForm" class="applicationForm">
+            <label><span>Título de la tarjeta</span><input name="title" value="${esc(w.title||'')}" required></label>
+            <label><span>Subtítulo</span><input name="subtitle" value="${esc(w.subtitle||'')}"></label>
+            ${app?`
+                <label><span>Nombre de la aplicación</span><input name="app_name" value="${esc(app.name||'')}" required></label>
+                <label><span>URL</span><input name="app_url" type="url" value="${esc(app.url||'')}" required></label>
+                <label><span>Descripción</span><textarea name="app_description" rows="3">${esc(app.description||'')}</textarea></label>
+                <label><span>Icono</span><input name="icon_value" value="${esc(app.icon_value||'')}" placeholder="Ej. jellyfin, portainer o imagen Docker"></label>
+                <label><span>Abrir</span><select name="open_mode"><option value="new_tab" ${app.open_mode!=='same'?'selected':''}>Nueva pestaña</option><option value="same" ${app.open_mode==='same'?'selected':''}>Misma pestaña</option></select></label>
+            `:''}
+            <label><span>Grupo</span><select name="parent"><option value="0">Ninguno</option>${groups.map(g=>`<option value="${g.id}" ${w.parent_widget_id===g.id?'selected':''}>${esc(g.title)}</option>`).join('')}</select></label>
+            ${['information.iframe','information.json'].includes(w.type)?`<label><span>Configuración JSON</span><textarea name="config" rows="6">${esc(JSON.stringify(w.config||{},null,2))}</textarea></label>`:''}
+            <div class="formActions"><button type="button" onclick="document.getElementById('modal').close()">Cancelar</button><button class="primaryButton" type="submit">Guardar cambios</button></div>
+        </form>`;
+    $('modal').showModal();
+    $('propForm').onsubmit=async e=>{
+        e.preventDefault();
+        const f=new FormData(e.target);
+        let config=w.config||{};
+        try{
+            if(f.get('config'))config=JSON.parse(f.get('config'));
+            if(app){
+                await api('/api/v1/applications',{method:'PUT',body:JSON.stringify({
+                    id:Number(app.id),name:f.get('app_name'),url:f.get('app_url'),
+                    description:f.get('app_description'),icon_type:'auto',
+                    icon_value:f.get('icon_value'),open_mode:f.get('open_mode')
+                })});
+            }
+            await api(`/api/v1/widgets/${w.id}`,{method:'PUT',body:JSON.stringify({
+                title:f.get('title'),subtitle:f.get('subtitle'),
+                parent_widget_id:Number(f.get('parent')),config
+            })});
+            $('modal').close();
+            $('status').textContent='Cambios guardados';
+            await refresh();
+        }catch(x){alert(x.message)}
+    };
+}
 $('save').onclick=async()=>{
     try{
         await api('/api/v1/layouts',{
