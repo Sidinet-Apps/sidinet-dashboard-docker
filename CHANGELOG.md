@@ -1,3 +1,15 @@
+# Changelog
+
+## 1.1.0
+
+- Reframed SIDINET Dashboard as a lightweight application and service homepage; Docker is optional for normal use.
+- Added the redesigned dark glass dashboard interface with sidebar pages, search, application cards and system metrics.
+- Added direct manual application creation with name, URL and description, plus persistent application shortcuts.
+- Added application/widget add panel and cleaner edit-mode controls.
+- Fixed nested runtime metric rendering and automatic thermal-zone detection.
+- Added automatic manual beta publishing workflow for GHCR multi-architecture prereleases.
+- Retained read-only host integration, Safe Mode and isolated optional Docker proxy architecture.
+
 ## 1.0.0
 
 - Stable release based on 0.13.0; no new product features.
