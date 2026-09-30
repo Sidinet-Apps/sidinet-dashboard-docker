@@ -25,6 +25,9 @@ jobs:
 
       - name: Run tests
         run: go test ./...
+      - name: Check frontend JavaScript
+        run: node --check internal/webassets/web/static/js/app.js
+
 
       - name: Build dashboard
         run: go build ./cmd/dashboard
