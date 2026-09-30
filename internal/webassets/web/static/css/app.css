@@ -263,7 +263,8 @@ main {
     gap: 8px;
 }
 
-body:not(.editingMode) .pageActions {
+body:not(.editingMode) #addPage,
+body:not(.editingMode) #discover {
     display: none;
 }
 
