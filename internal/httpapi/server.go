@@ -648,7 +648,7 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "same-origin")
 		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data: https://cdn.jsdelivr.net; style-src 'self'; script-src 'self'; connect-src 'self'")
 		next.ServeHTTP(sw, r)
 		if sw.status >= 500 {
 			s.errors.Add(1)
