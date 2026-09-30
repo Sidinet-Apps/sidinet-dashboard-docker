@@ -484,9 +484,10 @@ function properties(w){
             `:''}
             <label><span>Grupo</span><select name="parent"><option value="0">Ninguno</option>${groups.map(g=>`<option value="${g.id}" ${w.parent_widget_id===g.id?'selected':''}>${esc(g.title)}</option>`).join('')}</select></label>
             ${['information.iframe','information.json'].includes(w.type)?`<label><span>Configuración JSON</span><textarea name="config" rows="6">${esc(JSON.stringify(w.config||{},null,2))}</textarea></label>`:''}
-            <div class="formActions"><button type="button" onclick="document.getElementById('modal').close()">Cancelar</button><button class="primaryButton" type="submit">Guardar cambios</button></div>
+            <div class="formActions"><button id="propCancel" type="button">Cancelar</button><button class="primaryButton" type="submit">Guardar cambios</button></div>
         </form>`;
     $('modal').showModal();
+    $('propCancel').onclick=()=>$('modal').close();
     $('propForm').onsubmit=async e=>{
         e.preventDefault();
         const f=new FormData(e.target);
