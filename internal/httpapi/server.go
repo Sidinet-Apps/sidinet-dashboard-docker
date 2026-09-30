@@ -174,6 +174,22 @@ func (s *Server) pages(w http.ResponseWriter, r *http.Request) {
 	s.json(w, 200, map[string]any{"pages": rows})
 }
 func (s *Server) applications(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPut {
+		var in struct {
+			ID int64 `json:"id"`
+			Name, URL, Description, IconType, IconValue, OpenMode string
+		}
+		if json.NewDecoder(http.MaxBytesReader(w, r.Body, 32<<10)).Decode(&in) != nil || in.ID < 1 || strings.TrimSpace(in.Name) == "" || !(strings.HasPrefix(in.URL, "http://") || strings.HasPrefix(in.URL, "https://")) {
+			s.json(w, 400, map[string]any{"error": "invalid application"})
+			return
+		}
+		if in.IconType == "" { in.IconType = "auto" }
+		if in.OpenMode == "" { in.OpenMode = "new_tab" }
+		q := `UPDATE applications SET name=`+database.Quote(in.Name)+`,url=`+database.Quote(in.URL)+`,description=`+database.Quote(in.Description)+`,icon_type=`+database.Quote(in.IconType)+`,icon_value=`+database.Quote(in.IconValue)+`,open_mode=`+database.Quote(in.OpenMode)+`,updated_at=CURRENT_TIMESTAMP WHERE id=`+strconv.FormatInt(in.ID,10)+`;`
+		if e := s.db.Exec(q); e != nil { s.json(w,500,map[string]any{"error":e.Error()}); return }
+		s.json(w,200,map[string]any{"ok":true})
+		return
+	}
 	if r.Method == http.MethodGet {
 		v, e := s.db.QueryText(`SELECT COALESCE(json_group_array(json_object('id',id,'name',name,'url',url,'description',COALESCE(description,''),'open_mode',open_mode,'icon_type',icon_type,'icon_value',COALESCE(icon_value,''),'source_type',source_type)), '[]') FROM (SELECT * FROM applications WHERE enabled=1 ORDER BY name);`)
 		if e != nil {
@@ -273,7 +289,11 @@ func (s *Server) widgetAction(w http.ResponseWriter, r *http.Request) {
 	case r.Method == http.MethodDelete:
 		err = s.db.Exec(`DELETE FROM widgets WHERE id=` + strconv.FormatInt(id, 10) + `;`)
 	case r.Method == http.MethodPost && action == "duplicate":
-		err = s.db.Exec(`INSERT INTO widgets(page_id,widget_type,provider_type,title,subtitle,enabled,refresh_mode,refresh_interval,visibility,style_override,config) SELECT page_id,widget_type,provider_type,title||' copia',subtitle,enabled,refresh_mode,refresh_interval,visibility,style_override,config FROM widgets WHERE id=` + strconv.FormatInt(id, 10) + `;`)
+		err = s.db.Exec(`INSERT INTO widgets(page_id,widget_type,provider_type,title,subtitle,enabled,refresh_mode,refresh_interval,visibility,style_override,config,parent_widget_id) SELECT page_id,widget_type,provider_type,title||' copia',subtitle,enabled,refresh_mode,refresh_interval,visibility,style_override,config,parent_widget_id FROM widgets WHERE id=` + strconv.FormatInt(id, 10) + `;`)
+		if err == nil {
+			newID, _ := s.db.QueryText(`SELECT CAST(last_insert_rowid() AS TEXT);`)
+			err = s.db.Exec(`INSERT INTO widget_layouts(widget_id,breakpoint,x,y,width,height,min_width,min_height,max_width,max_height) SELECT `+newID+`,breakpoint,x,y+1,width,height,min_width,min_height,max_width,max_height FROM widget_layouts WHERE widget_id=`+strconv.FormatInt(id,10)+`;`)
+		}
 	case r.Method == http.MethodPost && (action == "hide" || action == "show"):
 		val := "0"
 		if action == "show" {
