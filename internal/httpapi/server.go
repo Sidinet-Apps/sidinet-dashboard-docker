@@ -287,7 +287,16 @@ func (s *Server) widgetAction(w http.ResponseWriter, r *http.Request) {
 	}
 	switch {
 	case r.Method == http.MethodDelete:
+		appID, _ := s.db.QueryText(`SELECT CASE WHEN widget_type='application.shortcut' THEN COALESCE(json_extract(config,'$.application_id'),'') ELSE '' END FROM widgets WHERE id=`+strconv.FormatInt(id,10)+`;`)
 		err = s.db.Exec(`DELETE FROM widgets WHERE id=` + strconv.FormatInt(id, 10) + `;`)
+		if err == nil && appID != "" {
+			refs, _ := s.db.QueryText(`SELECT COUNT(*) FROM widgets WHERE widget_type='application.shortcut' AND json_extract(config,'$.application_id')=`+appID+`;`)
+			if refs == "0" {
+				sourceID, _ := s.db.QueryText(`SELECT COALESCE(source_id,'') FROM applications WHERE id=`+appID+`;`)
+				_ = s.db.Exec(`DELETE FROM applications WHERE id=`+appID+`;`)
+				if sourceID != "" { _ = s.db.Exec(`UPDATE docker_services SET dashboard_status='AVAILABLE',updated_at=CURRENT_TIMESTAMP WHERE stable_key=`+database.Quote(sourceID)+`;`) }
+			}
+		}
 	case r.Method == http.MethodPost && action == "duplicate":
 		err = s.db.Exec(`INSERT INTO widgets(page_id,widget_type,provider_type,title,subtitle,enabled,refresh_mode,refresh_interval,visibility,style_override,config,parent_widget_id) SELECT page_id,widget_type,provider_type,title||' copia',subtitle,enabled,refresh_mode,refresh_interval,visibility,style_override,config,parent_widget_id FROM widgets WHERE id=` + strconv.FormatInt(id, 10) + `;`)
 		if err == nil {
