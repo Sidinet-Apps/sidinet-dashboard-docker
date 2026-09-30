@@ -1,66 +1,148 @@
-# SIDINET Dashboard Docker - deployment for an EXISTING Docker/Compose installation.
-# This file does NOT install Docker or OpenMediaVault.
+# SIDINET Dashboard Docker
+#
+# Public deployment for an EXISTING Docker / Docker Compose installation.
+# This stack does NOT install Docker, Docker Compose or OpenMediaVault.
+#
+# PUID / PGID control ownership of persistent dashboard data.
+# Docker access is isolated through the read-only SIDINET Docker proxy.
+# The dashboard itself never mounts docker.sock.
+
 services:
+
   sidinet-dashboard:
-    image: "${SIDINET_IMAGE:-ghcr.io/CHANGE_ME/sidinet-dashboard-docker:latest}"
+    image: "${SIDINET_IMAGE:-ghcr.io/sidinet-apps/sidinet-dashboard-docker:latest}"
     container_name: sidinet-dashboard
     restart: unless-stopped
+
     ports:
       - "${SIDINET_PORT:-8585}:8080"
+
     environment:
+      PUID: "${PUID:-1000}"
+      PGID: "${PGID:-1000}"
       TZ: "${TZ:-America/Mexico_City}"
+
       SIDINET_DATA_DIR: /data
       SIDINET_LOG_LEVEL: "${SIDINET_LOG_LEVEL:-INFO}"
       SIDINET_SAFE_MODE: "${SIDINET_SAFE_MODE:-false}"
+
       SIDINET_DOCKER_ENABLED: "${SIDINET_DOCKER_ENABLED:-true}"
       SIDINET_DOCKER_HOST: "http://docker-proxy:2375"
+
       SIDINET_PERFORMANCE_PROFILE: "${SIDINET_PERFORMANCE_PROFILE:-balanced}"
+
       SIDINET_HOST_RESOLV_CONF: /host/etc/resolv.conf
       SIDINET_INTERNET_TARGET: "${SIDINET_INTERNET_TARGET:-1.1.1.1:53}"
+
       SIDINET_STORAGE_PATHS: "${SIDINET_STORAGE_PATHS:-/data}"
+
     volumes:
       - "${SIDINET_DATA_DIR:-./data}:/data"
+
+      # Host information - READ ONLY
       - /proc:/host/proc:ro
       - /sys/class/thermal:/host/sys/class/thermal:ro
       - /etc/resolv.conf:/host/etc/resolv.conf:ro
-      # Optional host/NAS paths: mount each read-only and add its container path to SIDINET_STORAGE_PATHS.
+
+      # Optional NAS/storage paths.
+      # Always mount host storage read-only.
+      #
+      # Example:
       # - /srv/dev-disk-by-uuid-XXXX:/host/storage/data:ro
+      #
+      # Then add /host/storage/data to SIDINET_STORAGE_PATHS.
+
     read_only: true
+
     tmpfs:
       - /tmp:size=32m,mode=1777
-    cap_drop: [ALL]
-    security_opt: ["no-new-privileges:true"]
+
+    # Start with all Linux capabilities removed.
+    cap_drop:
+      - ALL
+
+    # Minimum capabilities required by docker-entrypoint.sh
+    # to prepare /data and then drop privileges.
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+
+    security_opt:
+      - no-new-privileges:true
+
     pids_limit: 100
     mem_limit: 256m
     cpus: 0.50
+
     depends_on:
       - docker-proxy
+
     logging:
       driver: json-file
-      options: {max-size: "5m", max-file: "3"}
-    networks: [dashboard, sidinet-internal]
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+    networks:
+      - dashboard
+      - sidinet-internal
+
 
   docker-proxy:
-    image: "${SIDINET_IMAGE:-ghcr.io/CHANGE_ME/sidinet-dashboard-docker:latest}"
+    image: "${SIDINET_IMAGE:-ghcr.io/sidinet-apps/sidinet-dashboard-docker:latest}"
     container_name: sidinet-dashboard-docker-proxy
     restart: unless-stopped
-    entrypoint: ["/app/sidinet-docker-proxy"]
-    command: ["-listen", ":2375", "-socket", "/var/run/docker.sock"]
+
+    # The proxy bypasses the dashboard entrypoint intentionally.
+    entrypoint:
+      - /app/sidinet-docker-proxy
+
+    command:
+      - -listen
+      - :2375
+      - -socket
+      - /var/run/docker.sock
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    # Docker socket group.
+    # Override DOCKER_GID when the host uses another GID.
     group_add:
       - "${DOCKER_GID:-999}"
+
     read_only: true
+
     tmpfs:
       - /tmp:size=8m,mode=1777
-    cap_drop: [ALL]
-    security_opt: ["no-new-privileges:true"]
+
+    cap_drop:
+      - ALL
+
+    security_opt:
+      - no-new-privileges:true
+
     pids_limit: 40
     mem_limit: 64m
     cpus: 0.10
-    networks: [sidinet-internal]
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+    networks:
+      - sidinet-internal
+
 
 networks:
+
+  # Network used to expose the dashboard.
   dashboard:
+
+  # Private network between dashboard and Docker proxy.
+  # Docker proxy is NOT exposed to the host or Internet.
   sidinet-internal:
     internal: true
