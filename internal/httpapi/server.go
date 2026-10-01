@@ -219,6 +219,31 @@ func (s *Server) applications(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Error(w, "method not allowed", 405)
 }
+func (s *Server) placeWidget(widgetID, pageID int64) {
+	for _, bp := range []string{"desktop", "tablet", "mobile"} {
+		cols, ww := 12, 3
+		if bp == "tablet" { cols, ww = 8, 4 }
+		if bp == "mobile" { cols, ww = 4, 4 }
+		hh := 2
+		raw, _ := s.db.QueryText(`SELECT COALESCE(json_group_array(json_object('x',l.x,'y',l.y,'w',l.width,'h',l.height)),'[]') FROM widget_layouts l JOIN widgets w ON w.id=l.widget_id WHERE w.page_id=`+strconv.FormatInt(pageID,10)+` AND l.breakpoint=`+database.Quote(bp)+` AND w.id<>`+strconv.FormatInt(widgetID,10)+`;`)
+		var occupied []struct { X int `json:"x"`; Y int `json:"y"`; W int `json:"w"`; H int `json:"h"` }
+		_ = json.Unmarshal([]byte(raw), &occupied)
+		x, y := 0, 0
+		found := false
+		for !found {
+			for x = 0; x+ww <= cols; x++ {
+				collision := false
+				for _, o := range occupied {
+					if x < o.X+o.W && x+ww > o.X && y < o.Y+o.H && y+hh > o.Y { collision = true; break }
+				}
+				if !collision { found = true; break }
+			}
+			if !found { y++ }
+		}
+		_ = s.db.Exec(`INSERT OR REPLACE INTO widget_layouts(widget_id,breakpoint,x,y,width,height) VALUES(`+strconv.FormatInt(widgetID,10)+`,`+database.Quote(bp)+`,`+strconv.Itoa(x)+`,`+strconv.Itoa(y)+`,`+strconv.Itoa(ww)+`,`+strconv.Itoa(hh)+`);`)
+	}
+}
+
 func (s *Server) widgetCRUD(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", 405)
@@ -263,13 +288,8 @@ func (s *Server) widgetCRUD(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := s.db.QueryText(`SELECT CAST(last_insert_rowid() AS TEXT);`)
-	for _, bp := range []string{"desktop", "tablet", "mobile"} {
-		ww := 3
-		if bp != "desktop" {
-			ww = 4
-		}
-		_ = s.db.Exec(`INSERT OR IGNORE INTO widget_layouts(widget_id,breakpoint,x,y,width,height) VALUES(` + id + `,` + database.Quote(bp) + `,0,0,` + strconv.Itoa(ww) + `,2);`)
-	}
+	widgetID, _ := strconv.ParseInt(id, 10, 64)
+	s.placeWidget(widgetID, in.PageID)
 	s.json(w, 201, map[string]any{"ok": true, "id": id})
 }
 func (s *Server) widgetAction(w http.ResponseWriter, r *http.Request) {
@@ -427,7 +447,7 @@ func (s *Server) runtimePage(w http.ResponseWriter, r *http.Request) {
 		if x["type"] == "application.shortcut" {
 			if cfg, ok := x["config"].(map[string]any); ok {
 				if aid, ok := cfg["application_id"].(float64); ok {
-					aj, _ := s.db.QueryText(`SELECT json_object('id',id,'name',name,'url',url,'description',COALESCE(description,''),'open_mode',open_mode,'monitor_id',COALESCE(monitor_id,0),'icon_type',icon_type,'icon_value',COALESCE(icon_value,''),'source_type',source_type) FROM applications WHERE enabled=1 AND id=` + strconv.FormatInt(int64(aid), 10) + ` LIMIT 1;`)
+					aj, _ := s.db.QueryText(`SELECT json_object('id',id,'name',name,'url',url,'description',COALESCE(description,''),'open_mode',open_mode,'monitor_id',COALESCE(monitor_id,0),'icon_type',icon_type,'icon_value',COALESCE(icon_value,''),'source_type',source_type,'source_id',COALESCE(source_id,''),'docker_state',COALESCE((SELECT state FROM docker_services ds WHERE ds.stable_key=applications.source_id),'')) FROM applications WHERE enabled=1 AND id=` + strconv.FormatInt(int64(aid), 10) + ` LIMIT 1;`)
 					var app any
 					if aj != "" {
 						_ = json.Unmarshal([]byte(aj), &app)
@@ -623,13 +643,8 @@ func (s *Server) discoveryAdopt(w http.ResponseWriter, r *http.Request) {
 	if exists == "" {
 		_ = s.db.Exec(`INSERT INTO widgets(page_id,widget_type,provider_type,title,config) VALUES(` + strconv.FormatInt(in.PageID, 10) + `,'application.shortcut','',` + database.Quote(d.Name) + `,` + database.Quote(`{"application_id":`+appID+`}`) + `);`)
 		wid, _ := s.db.QueryText(`SELECT CAST(last_insert_rowid() AS TEXT);`)
-		for _, bp := range []string{"desktop", "tablet", "mobile"} {
-			ww := 3
-			if bp != "desktop" {
-				ww = 4
-			}
-			_ = s.db.Exec(`INSERT OR IGNORE INTO widget_layouts(widget_id,breakpoint,x,y,width,height) VALUES(` + wid + `,` + database.Quote(bp) + `,0,0,` + strconv.Itoa(ww) + `,2);`)
-		}
+		widgetID, _ := strconv.ParseInt(wid, 10, 64)
+		s.placeWidget(widgetID, in.PageID)
 		exists = wid
 	}
 	_ = s.db.Exec(`UPDATE docker_services SET dashboard_status='ADDED',updated_at=CURRENT_TIMESTAMP WHERE stable_key=` + database.Quote(in.StableKey) + `;`)
