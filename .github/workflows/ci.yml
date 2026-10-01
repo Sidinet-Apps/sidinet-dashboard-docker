@@ -34,3 +34,6 @@ jobs:
 
       - name: Build Docker proxy
         run: go build ./cmd/docker-proxy
+
+      - name: Full persistent /data container recreation test
+        run: bash scripts/test-persistence.sh
