@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0
+
+- Adopta el diseño visual aprobado con Glass como experiencia predeterminada y cinco temas: Glass, Modern Dark, OLED, Light y Minimal.
+- Integra fecha y hora en vivo en la barra superior.
+- Permite cambiar y persistir el nombre del dashboard.
+- Añade crédito discreto: Dashboard By Sidinet Consultoría Digital y Sistemas / Derechos Reservados.
+- Integra Docker Discovery directamente en Agregar: lista contenedores instalados y permite adoptarlos con un clic.
+- Conserva la opción Personalizado para aplicaciones por nombre, URL y descripción.
+- Mantiene Docker en modo estrictamente read-only mediante el proxy existente; agregar al dashboard no modifica contenedores ni Compose.
+- Refuerza truncado y ajuste de textos para evitar desbordamientos en tarjetas.
+
 ## 1.1.2
 
 - Reemplaza el arrastre defectuoso por movimiento persistente con Pointer Events.

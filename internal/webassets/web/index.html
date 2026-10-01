@@ -15,7 +15,7 @@
         <div class="brand">
             <div class="brandMark">S</div>
             <div>
-                <strong>SIDINET</strong>
+                <strong id="dashboardName">SIDINET</strong>
                 <span>Dashboard</span>
             </div>
         </div>
@@ -23,9 +23,8 @@
         <nav id="pages" class="sidebarNav"></nav>
 
         <div class="sidebarBottom">
-            <button id="theme" class="sidebarButton" type="button">
-                Apariencia
-            </button>
+            <button id="theme" class="sidebarButton" type="button">Apariencia</button>
+            <button id="renameDashboard" class="sidebarButton" type="button">Nombre del dashboard</button>
 
             <button id="kiosk" class="sidebarButton" type="button">
                 Kiosk
@@ -45,9 +44,8 @@
                 >
             </div>
 
-            <span id="status" class="connectionStatus">
-                Conectando...
-            </span>
+            <div id="dateTime" class="dateTime" aria-label="Fecha y hora"></div>
+            <span id="status" class="connectionStatus">Conectando...</span>
 
             <button id="edit" class="primaryButton" type="button">
                 Editar
@@ -101,6 +99,7 @@
     </div>
 
 </div>
+<footer class="sidinetCredit">Dashboard By Sidinet Consultoría Digital y Sistemas<br>Derechos Reservados</footer>
 
 <dialog id="modal">
     <div id="modalBody"></div>

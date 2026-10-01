@@ -535,113 +535,43 @@ $('addPage').onclick=async()=>{const name=prompt('Nombre de la nueva página');i
 $('store').onclick=async()=>{
     $('modalBody').innerHTML=`
         <div class="addPanel">
-            <div class="addPanelHeader">
-                <div>
-                    <h2>Agregar al dashboard</h2>
-                    <p>Agrega una aplicación o un widget de información.</p>
-                </div>
-            </div>
-
+            <div class="addPanelHeader"><div><h2>Agregar al dashboard</h2><p>Selecciona un contenedor instalado, agrega una aplicación personalizada o elige un widget.</p></div></div>
             <div class="addTypeSelector">
-                <button
-                    type="button"
-                    class="addType active"
-                    data-add-view="application">
-                    <strong>Aplicación</strong>
-                    <span>Acceso directo a un servicio o página web</span>
-                </button>
-
-                <button
-                    type="button"
-                    class="addType"
-                    data-add-view="widget">
-                    <strong>Widget</strong>
-                    <span>Información y métricas del sistema</span>
-                </button>
+                <button type="button" class="addType active" data-add-view="application"><strong>Aplicación</strong><span>Contenedor detectado o acceso personalizado</span></button>
+                <button type="button" class="addType" data-add-view="widget"><strong>Widget</strong><span>Información y métricas del sistema</span></button>
             </div>
-
             <section id="applicationAddView" class="addView">
-                <form id="applicationForm" class="applicationForm">
-                    <label>
-                        <span>Nombre</span>
-                        <input
-                            id="applicationName"
-                            type="text"
-                            maxlength="100"
-                            placeholder="Ej. Portainer"
-                            required>
-                    </label>
-
-                    <label>
-                        <span>URL</span>
-                        <input
-                            id="applicationURL"
-                            type="url"
-                            placeholder="https://..."
-                            required>
-                    </label>
-
-                    <label>
-                        <span>Descripción</span>
-                        <textarea
-                            id="applicationDescription"
-                            maxlength="250"
-                            rows="3"
-                            placeholder="Descripción opcional"></textarea>
-                    </label>
-
+                <div class="addSourceTabs">
+                    <button type="button" class="active" data-app-source="installed">Contenedores instalados</button>
+                    <button type="button" data-app-source="custom">Personalizado</button>
+                </div>
+                <div id="installedApplications"><div class="loadingState">Buscando contenedores...</div></div>
+                <form id="applicationForm" class="applicationForm" hidden>
+                    <label><span>Nombre</span><input id="applicationName" type="text" maxlength="100" placeholder="Ej. Portainer" required></label>
+                    <label><span>URL</span><input id="applicationURL" type="url" placeholder="https://..." required></label>
+                    <label><span>Descripción</span><textarea id="applicationDescription" maxlength="250" rows="3" placeholder="Descripción opcional"></textarea></label>
                     <div id="applicationFormError" class="formError" hidden></div>
-
-                    <div class="formActions">
-                        <button
-                            type="button"
-                            class="secondary"
-                            data-close-add>
-                            Cancelar
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="primary">
-                            Agregar aplicación
-                        </button>
-                    </div>
+                    <div class="formActions"><button type="button" class="secondary" data-close-add>Cancelar</button><button type="submit" class="primary">Agregar aplicación</button></div>
                 </form>
             </section>
-
-            <section id="widgetAddView" class="addView" hidden>
-                <div id="widgetCatalog" class="widgetCatalog">
-                    <div class="loadingState">Cargando widgets...</div>
-                </div>
-            </section>
-        </div>
-    `;
-
+            <section id="widgetAddView" class="addView" hidden><div id="widgetCatalog" class="widgetCatalog"><div class="loadingState">Cargando widgets...</div></div></section>
+        </div>`;
     $('modal').showModal();
-
     try{
-        const catalog=await api('/api/v1/widgets/catalog');
-
-        $('widgetCatalog').innerHTML=(catalog.widgets||[]).map(x=>`
-            <button
-                type="button"
-                class="widgetChoice storeItem"
-                data-type="${esc(x.type)}">
-                <strong>${esc(x.name)}</strong>
-                <span>${esc(x.category||'Widget')}</span>
-            </button>
-        `).join('')||`
-            <div class="emptyState">
-                No hay widgets disponibles.
-            </div>
-        `;
-    }catch(e){
-        $('widgetCatalog').innerHTML=`
-            <div class="formError">
-                ${esc(e.message)}
-            </div>
-        `;
-    }
+        const [catalog,discovery]=await Promise.all([
+            api('/api/v1/widgets/catalog'),
+            api('/api/v1/discovery/docker').catch(()=>({services:[],unavailable:true}))
+        ]);
+        $('widgetCatalog').innerHTML=(catalog.widgets||[]).map(x=>`<button type="button" class="widgetChoice storeItem" data-type="${esc(x.type)}"><strong>${esc(x.name)}</strong><span>${esc(x.category||'Widget')}</span></button>`).join('')||'<div class="emptyState">No hay widgets disponibles.</div>';
+        const services=(discovery.services||[]).filter(s=>String(s.dashboard_status||'').toUpperCase()!=='ADDED');
+        $('installedApplications').innerHTML=services.length?`<div class="installedList">${services.map(s=>{
+            const hint=String(s.suggested_icon||s.image||s.suggested_name||'').toLowerCase();
+            const islug=(hint.split('/').pop()||'').replace(/[:@].*$/,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+            const icon=islug?'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/'+encodeURIComponent(islug)+'.svg':'';
+            const initial=String(s.suggested_name||s.service||s.container_name||'D').slice(0,2).toUpperCase();
+            return `<article class="installedService"><div class="installedIcon">${icon?`<img src="${esc(icon)}" alt="" data-icon-fallback="docker" data-fallback="${esc(initial)}">`:esc(initial)}</div><div class="installedInfo"><strong>${esc(s.suggested_name||s.service||s.container_name||'Servicio')}</strong><span>${esc(s.image||'')}</span><small>${esc(s.state||'desconocido')}${s.suggested_url?' · '+esc(s.suggested_url):''}</small></div><button type="button" class="primaryButton installedAdd" data-key="${esc(s.stable_key)}" ${!s.suggested_url?'disabled title="Sin URL publicada utilizable"':''}>Agregar</button></article>`;
+        }).join('')}</div>`:`<div class="discoveryUnavailable">${discovery.unavailable?'Docker Discovery no está disponible en esta instalación. Puedes usar Personalizado.':'No hay contenedores pendientes por agregar. Puedes usar Personalizado.'}</div>`;
+    }catch(e){$('status').textContent=e.message}
 };
 $('modal').addEventListener('click',e=>{
     const viewButton=e.target.closest('[data-add-view]');
@@ -738,7 +668,7 @@ $('closeModal').onclick=()=>$('modal').close();
 $('search').oninput=e=>{const q=e.target.value.trim().toLowerCase(),box=$('searchResults');if(!q){box.hidden=true;return}const hits=widgets.filter(w=>(w.title||w.type).toLowerCase().includes(q));box.innerHTML=hits.map(w=>`<button class="searchHit" data-id="${w.id}">${esc(w.title||w.type)}</button>`).join('')||'Sin resultados';box.hidden=false};$('searchResults').onclick=e=>{const b=e.target.closest('[data-id]');if(!b)return;document.querySelector(`.card[data-id="${b.dataset.id}"]`)?.scrollIntoView({behavior:'smooth',block:'center'})};
 $('kiosk').onclick=()=>{document.body.classList.toggle('kiosk');history.replaceState(null,'',document.body.classList.contains('kiosk')?'?kiosk=1':location.pathname)};if(new URLSearchParams(location.search).get('kiosk')==='1')document.body.classList.add('kiosk');
 document.addEventListener('visibilitychange',()=>document.hidden?clearInterval(timer):start());
-function applyTheme(t){const v=t?.values||{},r=document.documentElement;for(const [k,css] of Object.entries({bg:'--bg',surface:'--surface',text:'--text',muted:'--muted',accent:'--accent',border:'--border',radius:'--radius',gap:'--gap',padding:'--card-padding',blur:'--card-blur',overlay:'--overlay'}))if(v[k]!=null)r.style.setProperty(css,v[k]);if(v.card_opacity!=null)r.style.setProperty('--card-opacity',v.card_opacity);if(v.background_image)r.style.setProperty('--bg-image',`url("${String(v.background_image).replace(/["\\]/g,'')}")`)}async function loadTheme(){try{applyTheme((await api(`/api/v1/themes?page=${encodeURIComponent(slug)}`)).theme)}catch{}}
+function applyTheme(t){const v=t?.values||{},r=document.documentElement;r.dataset.themeName=String(t?.name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');for(const [k,css] of Object.entries({bg:'--bg',surface:'--surface',text:'--text',muted:'--muted',accent:'--accent',border:'--border',radius:'--radius',gap:'--gap',padding:'--card-padding',blur:'--card-blur',overlay:'--overlay'}))if(v[k]!=null)r.style.setProperty(css,v[k]);if(v.card_opacity!=null)r.style.setProperty('--card-opacity',v.card_opacity);if(v.background_image)r.style.setProperty('--bg-image',`url("${String(v.background_image).replace(/["\\]/g,'')}")`)}async function loadTheme(){try{applyTheme((await api(`/api/v1/themes?page=${encodeURIComponent(slug)}`)).theme)}catch{}}
 $('theme').onclick=async()=>{const ps=await api('/api/v1/themes/presets');$('modalBody').innerHTML=`<h2>Apariencia</h2>${Object.entries(ps.presets||{}).map(([k,x])=>`<button class="preset" data-preset="${k}">${esc(x.name)}</button>`).join('')}`;$('modal').showModal();$('modalBody').querySelectorAll('.preset').forEach(b=>b.onclick=async()=>{const x=ps.presets[b.dataset.preset];await api(`/api/v1/themes?page=${encodeURIComponent(slug)}`,{method:'PUT',body:JSON.stringify(x)});$('modal').close();loadTheme()})};
 $('discover').onclick=async()=>{
     try{
@@ -791,3 +721,25 @@ document.addEventListener('error',e=>{
     }
 },true);
 loadPages().then(start);
+
+function updateDateTime(){
+    const now=new Date(), box=$('dateTime'); if(!box)return;
+    box.innerHTML='<strong>'+now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})+'</strong><span>'+now.toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short',year:'numeric'})+'</span>';
+}
+async function loadDashboardSettings(){try{const x=await api('/api/v1/settings/dashboard');$('dashboardName').textContent=x.name||'SIDINET';document.title=(x.name||'SIDINET')+' Dashboard'}catch{}}
+$('renameDashboard').onclick=async()=>{const current=$('dashboardName').textContent||'SIDINET';const name=prompt('Nombre del dashboard',current);if(!name||name.trim()===current)return;try{const x=await api('/api/v1/settings/dashboard',{method:'PUT',body:JSON.stringify({name:name.trim()})});$('dashboardName').textContent=x.name;document.title=x.name+' Dashboard';$('status').textContent='Nombre actualizado'}catch(e){alert(e.message)}};
+$('modal').addEventListener('click',async e=>{
+    const source=e.target.closest('[data-app-source]');
+    if(source){
+        document.querySelectorAll('[data-app-source]').forEach(b=>b.classList.toggle('active',b===source));
+        const custom=source.dataset.appSource==='custom';
+        $('applicationForm').hidden=!custom;$('installedApplications').hidden=custom;return;
+    }
+    const add=e.target.closest('.installedAdd');
+    if(add){
+        add.disabled=true;add.textContent='Agregando...';
+        try{await api('/api/v1/discovery/adopt',{method:'POST',body:JSON.stringify({stable_key:add.dataset.key,page_id:pageId})});$('modal').close();$('status').textContent='Contenedor agregado';await refresh()}
+        catch(err){add.disabled=false;add.textContent='Agregar';alert(err.message)}
+    }
+});
+updateDateTime();setInterval(updateDateTime,30000);loadDashboardSettings();
