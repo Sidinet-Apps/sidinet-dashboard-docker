@@ -61,6 +61,7 @@ func New(cfg config.Config, log *slog.Logger, db *database.DB, p *providers.Regi
 	m.HandleFunc("/api/v1/runtime/page/", s.runtimePage)
 	m.HandleFunc("/api/v1/layouts", s.layouts)
 	m.HandleFunc("/api/v1/themes", s.themeAPI)
+	m.HandleFunc("/api/v1/settings/dashboard", s.dashboardSettings)
 	m.HandleFunc("/api/v1/themes/presets", s.themePresets)
 	m.HandleFunc("/api/v1/recovery/status", s.recoveryStatus)
 	m.HandleFunc("/api/v1/recovery/backup", s.recoveryBackup)
@@ -692,6 +693,30 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 
 var _ = fmt.Sprintf
 
+func (s *Server) dashboardSettings(w http.ResponseWriter, r *http.Request) {
+	const key = "dashboard.name"
+	switch r.Method {
+	case http.MethodGet:
+		name, _ := s.db.QueryText(`SELECT value FROM settings WHERE key='` + key + `';`)
+		if strings.TrimSpace(name) == "" { name = "SIDINET" }
+		s.json(w, 200, map[string]any{"name": name})
+	case http.MethodPut:
+		var in struct { Name string `json:"name"` }
+		if json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&in) != nil {
+			s.json(w, 400, map[string]any{"error":"invalid dashboard settings"}); return
+		}
+		in.Name = strings.TrimSpace(in.Name)
+		if len(in.Name) < 1 || len([]rune(in.Name)) > 40 {
+			s.json(w, 400, map[string]any{"error":"dashboard name must be 1-40 characters"}); return
+		}
+		q := `INSERT INTO settings(key,value,type,updated_at) VALUES('`+key+`,'`+database.Quote(in.Name)+`,'string',CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value=excluded.value,type='string',updated_at=CURRENT_TIMESTAMP;`
+		if e:=s.db.Exec(q); e!=nil { s.json(w,500,map[string]any{"error":e.Error()}); return }
+		s.json(w,200,map[string]any{"ok":true,"name":in.Name})
+	default:
+		http.Error(w,"method not allowed",405)
+	}
+}
+
 func (s *Server) themePresets(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", 405)
@@ -710,7 +735,7 @@ func (s *Server) themeAPI(w http.ResponseWriter, r *http.Request) {
 			v, _ = s.db.QueryText(`SELECT value FROM settings WHERE key='theme.global';`)
 		}
 		if v == "" {
-			v = themes.Encode(themes.Presets()["sidinet-dark"])
+			v = themes.Encode(themes.Presets()["glass"])
 		}
 		var out any
 		if json.Unmarshal([]byte(v), &out) != nil {
