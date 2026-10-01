@@ -577,8 +577,9 @@ func (s *Server) discoveryAdopt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in struct {
-		StableKey string `json:"stable_key"`
-		PageID    int64  `json:"page_id"`
+		StableKey   string `json:"stable_key"`
+		PageID      int64  `json:"page_id"`
+		URLOverride string `json:"url_override"`
 	}
 	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&in) != nil || in.StableKey == "" || in.PageID < 1 {
 		s.json(w, 400, map[string]any{"error": "invalid adoption"})
@@ -596,6 +597,9 @@ func (s *Server) discoveryAdopt(w http.ResponseWriter, r *http.Request) {
 		Image string `json:"image"`
 	}
 	_ = json.Unmarshal([]byte(raw), &d)
+	if strings.TrimSpace(in.URLOverride) != "" {
+		d.URL = strings.TrimSpace(in.URLOverride)
+	}
 	if !discovery.ValidSuggestedURL(d.URL) {
 		s.json(w, 409, map[string]any{"error": "service has no usable published URL"})
 		return

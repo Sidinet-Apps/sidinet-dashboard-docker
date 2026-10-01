@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="dark light">
     <title>SIDINET Dashboard</title>
+    <link rel="icon" href="/assets/static/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/assets/static/css/app.css">
 </head>
 
@@ -23,12 +24,7 @@
         <nav id="pages" class="sidebarNav"></nav>
 
         <div class="sidebarBottom">
-            <button id="theme" class="sidebarButton" type="button">Apariencia</button>
-            <button id="renameDashboard" class="sidebarButton" type="button">Nombre del dashboard</button>
-
-            <button id="kiosk" class="sidebarButton" type="button">
-                Kiosk
-            </button>
+            <button id="settings" class="sidebarButton" type="button">Configuración</button>
         </div>
     </aside>
 
@@ -46,10 +42,6 @@
 
             <div id="dateTime" class="dateTime" aria-label="Fecha y hora"></div>
             <span id="status" class="connectionStatus">Conectando...</span>
-
-            <button id="edit" class="primaryButton" type="button">
-                Editar
-            </button>
         </header>
 
         <main>
@@ -62,7 +54,8 @@
 
                 <div class="pageActions">
                     <button id="addPage" type="button">+ Página</button>
-                    <button id="store" type="button">Agregar</button>
+                    <button id="edit" class="primaryButton" type="button">Editar</button>
+                    <button id="store" class="primaryButton" type="button">+ Agregar</button>
                     <button id="discover" type="button" hidden>Docker</button>
                 </div>
             </section>
