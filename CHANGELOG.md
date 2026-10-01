@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.3
+
+- Añade Ordenar para compactar el layout sin perder posicionamiento libre.
+- Refina densidad, superficies, métricas, aplicaciones y jerarquía visual.
+- Mantiene drag/resize libre introducido en 1.1.2.
+
+
 ## 1.1.2
 
 - Reemplaza el arrastre defectuoso por movimiento persistente con Pointer Events.
