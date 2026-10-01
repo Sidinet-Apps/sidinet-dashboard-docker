@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.2
+
+- Sustituye las capas CSS acumuladas por la geometría y el sistema visual del Prototype 06 aprobado.
+- Mantiene exactamente la estructura premium acordada: sidebar 244 px, topbar 96 px, Glass, tarjetas de aplicaciones 154 px, métricas, fondo y proporciones.
+- Elimina las letras de fallback O/P/Q cuando existe icono de aplicación.
+- Conserva backend, datos reales, edición, persistencia y Docker Discovery sin reinterpretar el diseño aprobado.
+- Mantiene las correcciones 1.3.1 de estado Docker, puerto WebUI y colocación sin superposiciones.
+
 ## 1.3.1
 
 - Alinea la interfaz con el Prototype 06 aprobado: sidebar de 244 px, topbar, fondo, tarjetas glass, proporciones y tipografía compacta.
@@ -7,7 +15,6 @@
 - Corrige Docker Discovery para preferir puertos WebUI conocidos en vez del puerto TCP numéricamente menor.
 - Separa el estado real del contenedor Docker del monitor HTTP: un contenedor `running` se muestra ONLINE aunque su WebUI use otro puerto o falle la comprobación HTTP.
 - Coloca widgets, aplicaciones y contenedores nuevos en el primer espacio libre del grid para evitar superposiciones en x=0,y=0.
-
 
 ## 1.3.0
 
@@ -48,7 +55,6 @@
 - Añade tratamiento de colisiones y una cuadrícula visual en modo edición.
 - Renueva la interfaz con una capa visual más compacta y premium.
 
-
 ## 1.1.1
 
 - Restored default deployment port 8088.
@@ -73,7 +79,6 @@
 - Stable release based on 0.13.0; no new product features.
 - Finalized generic Docker/Compose documentation and security release gate.
 - Added Compose-aware security smoke test for host/Docker isolation.
-
 
 ## 0.13.0
 - Technical stabilization only; no new dashboard features.
@@ -114,9 +119,7 @@
 - Network/storage widgets and runtime integration.
 - Optional host DNS/storage mounts; missing paths degrade safely.
 
-
 ## 0.7.0
-
 - Motor de monitoreo compartido con pool acotado de workers.
 - Monitores HTTP/HTTPS y TCP con timeout y latencia.
 - Estados ONLINE, DEGRADED, OFFLINE y UNKNOWN.
@@ -127,7 +130,6 @@
 - Migración aditiva desde 0.6.x sin reconstruir `/data`.
 
 ## 0.6.0
-
 - Docker Discovery normalizado y persistente.
 - Identidad estable Compose proyecto/servicio.
 - Resolución de labels, puertos y URL sugerida.
@@ -142,19 +144,15 @@
 - Dynamic page navigation and widget rendering.
 - Default system widgets on fresh installations.
 
-
 ## 0.2.0 - GitHub/OMV foundation
-
 - Separated production OMV Compose from source-development Compose.
 - Added GitHub Actions tests and GHCR multi-architecture publishing.
 - Added an internal read-only Docker socket proxy binary.
 - Added Docker status/container read API to the dashboard.
 - Added proxy allowlist security tests.
-- Added OMV deployment and security documentation.
 - Production Compose now assumes Docker/Compose already exists and never installs Docker.
 
 ## 0.1.0 - Bootstrap
-
 - Go application core.
 - SQLite/WAL foundation.
 - System providers and runtime API.
