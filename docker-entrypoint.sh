@@ -1,6 +1,14 @@
 #!/bin/sh
 set -eu
 
+# The image also contains the read-only Docker proxy. It does not use /data
+# and must not run dashboard ownership preparation.
+case "${1:-}" in
+    /app/sidinet-docker-proxy|sidinet-docker-proxy)
+        exec "$@"
+        ;;
+esac
+
 PUID="${PUID:-1000}"
 PGID="${PGID:-1000}"
 
@@ -35,7 +43,10 @@ CURRENT_GID="$(stat -c '%g' /data)"
 
 if [ "$CURRENT_UID" != "$PUID" ] || [ "$CURRENT_GID" != "$PGID" ]; then
     echo "Preparing /data for PUID=${PUID} PGID=${PGID}"
-    chown -R "$PUID:$PGID" /data
+    if ! chown -R "$PUID:$PGID" /data; then
+        echo "ERROR: Cannot prepare /data. The dashboard container requires CHOWN, SETUID and SETGID capabilities during startup when /data ownership differs." >&2
+        exit 1
+    fi
 fi
 
 echo "Starting SIDINET Dashboard as UID=${PUID} GID=${PGID}"
