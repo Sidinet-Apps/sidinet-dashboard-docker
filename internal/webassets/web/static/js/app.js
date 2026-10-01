@@ -403,6 +403,22 @@ $('cancel').onclick=()=>{
 };
 
 $('breakpoint').onchange=refresh;
+function compactLayout(){
+    pushUndo();
+    const c=cols[bp()];
+    const top=widgets.filter(w=>!w.parent_widget_id).sort((a,b)=>(a.layout?.y||0)-(b.layout?.y||0)||(a.layout?.x||0)-(b.layout?.x||0));
+    let x=0,y=0,rowH=1;
+    top.forEach(w=>{
+        const l=w.layout||(w.layout={x:0,y:0,w:3,h:2});
+        l.w=Math.max(1,Math.min(c,l.w||3)); l.h=Math.max(1,l.h||2);
+        if(x+l.w>c){x=0;y+=rowH;rowH=1}
+        l.x=x;l.y=y;x+=l.w;rowH=Math.max(rowH,l.h);
+        if(x>=c){x=0;y+=rowH;rowH=1}
+    });
+    render();
+    $('status').textContent='Layout ordenado; guarda para conservarlo';
+}
+$('compact').onclick=compactLayout;
 $('undo').onclick=()=>{if(!undoStack.length)return;redoStack.push(clone(widgets));widgets=undoStack.pop();render()};$('redo').onclick=()=>{if(!redoStack.length)return;undoStack.push(clone(widgets));widgets=redoStack.pop();render()};
 function applyCardLayout(card,l){
     const c=cols[bp()];
