@@ -64,7 +64,7 @@ func suggestedURL(host string, ports []dockerapi.Port) string {
 	}
 	h = strings.Trim(h, "[]")
 	// Prefer ports that commonly expose a Web UI. Never choose a lower peer/database port merely because it is numerically smaller.
-	preferred := map[uint16]int{80:0,443:0,8080:1,8081:1,8000:2,8123:2,8096:2,32400:2,9000:2,9443:2}
+	preferred := map[int]int{80:0,443:0,8080:1,8081:1,8000:2,8123:2,8096:2,32400:2,9000:2,9443:2}
 	sort.SliceStable(pp, func(i, j int) bool {
 		ri, iok := preferred[pp[i].PrivatePort]; rj, jok := preferred[pp[j].PrivatePort]
 		if iok != jok { return iok }
