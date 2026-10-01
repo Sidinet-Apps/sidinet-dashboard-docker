@@ -84,6 +84,17 @@ function value(w){
     ));
 }
 function esc(x){return String(x).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}function monitor(m){if(!m)return'';return `<div class="monitor ${(m.status||'unknown').toLowerCase()}"><i></i>${esc(m.status||'UNKNOWN')}</div>`}
+function applicationStatus(app,m){
+    if(app?.source_type==='docker'){
+        const state=String(app.docker_state||'').toLowerCase();
+        const online=state==='running';
+        const cls=online?'online':(state?'offline':'unknown');
+        const label=online?'ONLINE':(state?state.toUpperCase():'UNKNOWN');
+        const http=m?.status?String(m.status).toUpperCase():'';
+        return `<div class="monitor ${cls}"><i></i>${esc(label)}<small>${http?' · HTTP '+esc(http):''}</small></div>`;
+    }
+    return monitor(m);
+}
 function controls(w){
     if(!editing)
         return '';
@@ -206,7 +217,7 @@ function applicationBody(w){
             <span>${description}</span>
         </div>
 
-        ${monitor(w.monitor)}
+        ${applicationStatus(app,w.monitor)}
     `;
 
     if(!url)
