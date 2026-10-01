@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0
+
+- Acerca la interfaz al diseño visual aprobado: composición más limpia, tarjetas glass, fondo sin corte diagonal, navegación y métricas con mayor jerarquía visual.
+- Muestra `Agregar` únicamente durante el modo de edición y reubica `Editar` junto a las acciones de la página.
+- Añade favicon propio de SIDINET Dashboard.
+- Corrige el flujo para agregar contenedores detectados: permite adoptar directamente servicios con URL publicada y solicitar una URL manual cuando Docker no puede inferirla.
+- Mantiene Docker Discovery en modo estrictamente read-only; adoptar un contenedor solo crea el acceso dentro del dashboard.
+- En Inicio usa `Aplicaciones` como encabezado principal, manteniendo `Inicio` como página de navegación.
+
 ## 1.2.1
 
 - Corrige el arranque del dashboard con volúmenes persistentes cuando se ejecuta con `cap_drop: ALL`.
