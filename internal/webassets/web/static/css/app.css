@@ -1254,3 +1254,11 @@ html[data-theme-name="glass"] body:before{
 .sidebarButton{min-height:42px}
 .sidinetCredit{opacity:.72}
 @media(max-width:700px){html[data-theme-name="glass"] body:before{inset:50% 0 0 0}.applicationLaunch{grid-template-columns:64px minmax(0,1fr)}.applicationIcon{width:58px;height:58px}}
+
+/* Approved widget typography refinement */
+.applicationInfo strong,.applicationLaunch .launch{font-size:.90rem}
+.applicationInfo span,.applicationInfo p{font-size:.72rem;line-height:1.35}
+.applicationLaunch .monitor{font-size:.69rem}
+.metricCardHeader{font-size:.78rem}
+.metricCardValue{font-size:1.68rem}
+.metricCardSub,.metricCard small{font-size:.70rem;line-height:1.35}
