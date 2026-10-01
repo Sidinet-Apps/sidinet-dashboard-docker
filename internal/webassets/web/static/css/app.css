@@ -1262,3 +1262,16 @@ html[data-theme-name="glass"] body:before{
 .metricCardHeader{font-size:.78rem}
 .metricCardValue{font-size:1.68rem}
 .metricCardSub,.metricCard small{font-size:.70rem;line-height:1.35}
+
+/* Approved configuration navigation */
+.settingsModal{min-width:min(820px,82vw)}
+.settingsTabs{display:flex;gap:7px;overflow-x:auto;padding-bottom:14px;margin-bottom:18px;border-bottom:1px solid var(--border)}
+.settingsTabs button{white-space:nowrap;color:var(--muted);background:transparent}
+.settingsTabs button.active{color:#fff;background:rgba(77,141,255,.18);border-color:rgba(77,141,255,.35)}
+.settingsModal section{min-height:250px}
+.settingsModal h3{margin:4px 0 18px}
+.settingsModal label{display:block;color:var(--muted);font-size:.76rem;margin-bottom:7px}
+.settingsInline{display:flex;gap:8px;max-width:520px;margin-bottom:16px}
+.settingsInline input{flex:1;min-width:0;color:var(--text);background:var(--surface-strong);border:1px solid var(--border);border-radius:9px;padding:9px 11px}
+.settingsPresets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media(max-width:700px){.settingsModal{min-width:0}.settingsPresets{grid-template-columns:1fr 1fr}}
