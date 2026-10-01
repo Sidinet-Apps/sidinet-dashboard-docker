@@ -8,6 +8,9 @@
 - Corrige el flujo para agregar contenedores detectados: permite adoptar directamente servicios con URL publicada y solicitar una URL manual cuando Docker no puede inferirla.
 - Mantiene Docker Discovery en modo estrictamente read-only; adoptar un contenedor solo crea el acceso dentro del dashboard.
 - En Inicio usa `Aplicaciones` como encabezado principal, manteniendo `Inicio` como página de navegación.
+- Consolida Apariencia, nombre del dashboard y Kiosk bajo una única entrada `Configuración`.
+- Reduce la tipografía interna de aplicaciones y métricas manteniendo el tamaño de las tarjetas.
+- Protege las actualizaciones creando un snapshot SQLite previo a migraciones de instalaciones existentes; la configuración permanece en `/data`.
 
 ## 1.2.1
 
