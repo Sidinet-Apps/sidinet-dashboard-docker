@@ -39,13 +39,14 @@ func New(cfg config.Config, log *slog.Logger, web embed.FS) (*App, error) {
 	if err := recovery.ApplyPending(cfg.DataDir); err != nil {
 		return nil, fmt.Errorf("pending restore: %w", err)
 	}
+	existedBeforeOpen := databaseExists(cfg.DatabasePath)
 	db, err := database.Open(cfg.DatabasePath)
 	if err != nil {
 		return nil, err
 	}
 	// Existing installations are persistent state. Before any migration touches an
 	// existing database, keep a consistent SQLite snapshot inside /data/backups.
-	if databaseExists(cfg.DatabasePath) {
+	if existedBeforeOpen {
 		if _, backupErr := recovery.Create(db, cfg.DataDir, "pre-migration", "pre-migration"); backupErr != nil {
 			db.Close()
 			return nil, fmt.Errorf("pre-migration backup: %w", backupErr)
