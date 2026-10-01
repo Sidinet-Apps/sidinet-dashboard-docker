@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.1
+
+- Alinea la interfaz con el Prototype 06 aprobado: sidebar de 244 px, topbar, fondo, tarjetas glass, proporciones y tipografía compacta.
+- Mueve Editar y Agregar a la barra superior; Agregar sólo aparece en modo edición.
+- Corrige Docker Discovery para preferir puertos WebUI conocidos en vez del puerto TCP numéricamente menor.
+- Separa el estado real del contenedor Docker del monitor HTTP: un contenedor `running` se muestra ONLINE aunque su WebUI use otro puerto o falle la comprobación HTTP.
+- Coloca widgets, aplicaciones y contenedores nuevos en el primer espacio libre del grid para evitar superposiciones en x=0,y=0.
+
+
 ## 1.3.0
 
 - Acerca la interfaz al diseño visual aprobado: composición más limpia, tarjetas glass, fondo sin corte diagonal, navegación y métricas con mayor jerarquía visual.
