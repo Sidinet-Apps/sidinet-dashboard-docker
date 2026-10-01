@@ -1174,3 +1174,30 @@ body.editingMode .card.dragging{z-index:30;opacity:.92;transform:scale(1.015);bo
 .cardEditTools{top:7px;right:7px;background:rgba(7,13,24,.94);border-color:rgba(148,163,184,.20)}
 @media(max-width:900px){body.editingMode .grid{background-size:calc((100% - 7 * var(--gap))/8 + var(--gap)) 78px}}
 @media(max-width:700px){body.editingMode .grid{background-size:calc((100% - 3 * var(--gap))/4 + var(--gap)) 78px}}
+
+
+/* 1.2 approved visual system */
+:root{--sidebar-width:244px;--radius:15px;--gap:17px;--card-padding:19px;--card-blur:13px;--card-opacity:.62}
+.sidebar{padding:20px 15px;background:rgba(5,12,22,.80);backdrop-filter:blur(22px)}
+.brand{gap:13px;padding:2px 17px 25px}.brandMark{width:52px;height:46px;border-radius:13px;background:linear-gradient(145deg,#79baff,#2772ea);font-size:0;position:relative;overflow:hidden}
+.brandMark:before,.brandMark:after{content:"";position:absolute;top:7px;width:12px;height:34px;border-radius:4px;background:#dcecff}
+.brandMark:before{left:14px;transform:rotate(31deg)}.brandMark:after{right:14px;transform:rotate(-31deg)}
+.brand strong{max-width:145px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:1.28rem;letter-spacing:-.02em}.brand span{font-size:.72rem}
+.sidebarNav button{min-height:50px;border-radius:11px;padding:0 18px;font-size:.88rem}
+.topbar{height:96px;padding:0 35px;background:transparent;border-bottom:0;backdrop-filter:none}
+#search{height:54px;border-radius:15px;background:rgba(13,18,29,.35);border-color:rgba(255,255,255,.20)}
+.topbar>button{min-height:54px;border-radius:15px;padding-inline:20px}
+main{padding:10px 38px 90px}.pageHeader{margin-bottom:20px}.pageHeader h1{font-size:1.8rem}
+.card{border-color:rgba(255,255,255,.16);background:color-mix(in srgb,var(--surface) calc(var(--card-opacity)*100%),transparent);box-shadow:0 13px 35px rgba(0,0,0,.18)}
+.applicationCard{min-height:154px}.applicationIcon{width:72px;height:72px;flex-basis:72px;background:transparent;box-shadow:none;border-radius:0}.applicationIcon img{width:68px;height:68px;object-fit:contain}
+.applicationInfo{min-width:0}.applicationInfo strong,.applicationInfo span{overflow:hidden;text-overflow:ellipsis}.applicationInfo strong{white-space:nowrap}.applicationInfo span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.dateTime{margin-left:auto;text-align:right;min-width:145px}.dateTime strong{display:block;font-size:.94rem}.dateTime span{display:block;margin-top:2px;color:var(--muted);font-size:.68rem}
+.connectionStatus{margin-left:4px}.sidinetCredit{position:fixed;right:16px;bottom:11px;z-index:18;text-align:right;color:color-mix(in srgb,var(--muted) 72%,transparent);font-size:9px;line-height:1.45;letter-spacing:.02em;pointer-events:none}
+.addSourceTabs{display:flex;gap:7px;margin:14px 0}.addSourceTabs button.active{background:var(--accent);color:#fff;border-color:transparent}
+.installedList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-height:430px;overflow:auto}
+.installedService{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:12px;padding:13px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.035)}
+.installedIcon{width:46px;height:46px;display:grid;place-items:center;border-radius:11px;background:rgba(77,141,255,.12);font-weight:800;color:#79baff}.installedIcon img{width:38px;height:38px;object-fit:contain}
+.installedInfo{min-width:0}.installedInfo strong,.installedInfo span,.installedInfo small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.installedInfo span,.installedInfo small{color:var(--muted);font-size:.68rem}.installedService button{white-space:nowrap}
+.discoveryUnavailable{padding:16px;border:1px dashed var(--border);border-radius:12px;color:var(--muted);font-size:.8rem}
+@media(max-width:900px){.dateTime{min-width:auto}.dateTime span{display:none}}
+@media(max-width:700px){.sidinetCredit{position:static;padding:18px;text-align:center}.dateTime{display:none}.installedList{grid-template-columns:1fr}}
