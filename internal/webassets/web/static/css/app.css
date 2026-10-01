@@ -1201,3 +1201,11 @@ main{padding:10px 38px 90px}.pageHeader{margin-bottom:20px}.pageHeader h1{font-s
 .discoveryUnavailable{padding:16px;border:1px dashed var(--border);border-radius:12px;color:var(--muted);font-size:.8rem}
 @media(max-width:900px){.dateTime{min-width:auto}.dateTime span{display:none}}
 @media(max-width:700px){.sidinetCredit{position:static;padding:18px;text-align:center}.dateTime{display:none}.installedList{grid-template-columns:1fr}}
+
+html[data-theme-name="glass"] body{
+ background:
+ radial-gradient(circle at 80% 27%,rgba(255,150,91,.88) 0 2.5%,rgba(218,91,65,.43) 10%,transparent 29%),
+ linear-gradient(160deg,transparent 0 53%,rgba(18,29,31,.88) 53% 100%),
+ linear-gradient(180deg,#273149 0%,#65474d 31%,#d87c58 50%,#283238 51%,#101a1d 100%);
+ background-attachment:fixed;background-size:cover;
+}
