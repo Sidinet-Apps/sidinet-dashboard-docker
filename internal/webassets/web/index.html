@@ -10,11 +10,12 @@
 </head>
 
 <body>
+<div id="wall"></div><div id="mount"></div>
 <div class="appShell">
 
     <aside class="sidebar">
         <div class="brand">
-            <div class="brandMark">S</div>
+            <div class="brandMark" aria-hidden="true"><i></i><i></i></div>
             <div>
                 <strong id="dashboardName">SIDINET</strong>
                 <span>Dashboard</span>
@@ -42,6 +43,7 @@
 
             <div id="dateTime" class="dateTime" aria-label="Fecha y hora"></div>
             <span id="status" class="connectionStatus">Conectando...</span>
+            <div class="topActions"><button id="store" class="primaryButton" type="button">+ Agregar</button><button id="edit" class="primaryButton" type="button">Editar</button></div>
         </header>
 
         <main>
@@ -54,8 +56,6 @@
 
                 <div class="pageActions">
                     <button id="addPage" type="button">+ Página</button>
-                    <button id="edit" class="primaryButton" type="button">Editar</button>
-                    <button id="store" class="primaryButton" type="button">+ Agregar</button>
                     <button id="discover" type="button" hidden>Docker</button>
                 </div>
             </section>

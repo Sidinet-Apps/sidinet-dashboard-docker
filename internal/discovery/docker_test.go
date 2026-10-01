@@ -22,3 +22,12 @@ func TestSidinetOverrides(t *testing.T) {
 		t.Fatalf("%+v", s)
 	}
 }
+
+func TestSuggestedURLPrefersWebUIPort(t *testing.T) {
+	c := dockerapi.Container{Names: []string{"/qbittorrent"}, Image: "linuxserver/qbittorrent", State: "running", Ports: []dockerapi.Port{
+		{PrivatePort: 6881, PublicPort: 6881, Type: "tcp"},
+		{PrivatePort: 8080, PublicPort: 8080, Type: "tcp"},
+	}}
+	s := Normalize(c, "192.168.1.20")
+	if s.SuggestedURL != "http://192.168.1.20:8080" { t.Fatalf("got %s", s.SuggestedURL) }
+}
