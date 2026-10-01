@@ -357,7 +357,7 @@ async function refresh(){
         widgets=j.widgets||[];
         pageId=j.page?.id||pageId;
 
-        $('pageTitle').textContent=j.page?.name||slug;
+        $('pageTitle').textContent=(slug==='inicio'?'Aplicaciones':(j.page?.name||slug));
         $('status').textContent='Conectado';
 
         render();
@@ -569,7 +569,7 @@ $('store').onclick=async()=>{
             const islug=(hint.split('/').pop()||'').replace(/[:@].*$/,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
             const icon=islug?'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/'+encodeURIComponent(islug)+'.svg':'';
             const initial=String(s.suggested_name||s.service||s.container_name||'D').slice(0,2).toUpperCase();
-            return `<article class="installedService"><div class="installedIcon">${icon?`<img src="${esc(icon)}" alt="" data-icon-fallback="docker" data-fallback="${esc(initial)}">`:esc(initial)}</div><div class="installedInfo"><strong>${esc(s.suggested_name||s.service||s.container_name||'Servicio')}</strong><span>${esc(s.image||'')}</span><small>${esc(s.state||'desconocido')}${s.suggested_url?' · '+esc(s.suggested_url):''}</small></div><button type="button" class="primaryButton installedAdd" data-key="${esc(s.stable_key)}" ${!s.suggested_url?'disabled title="Sin URL publicada utilizable"':''}>Agregar</button></article>`;
+            return `<article class="installedService"><div class="installedIcon">${icon?`<img src="${esc(icon)}" alt="" data-icon-fallback="docker" data-fallback="${esc(initial)}">`:esc(initial)}</div><div class="installedInfo"><strong>${esc(s.suggested_name||s.service||s.container_name||'Servicio')}</strong><span>${esc(s.image||'')}</span><small>${esc(s.state||'desconocido')}${s.suggested_url?' · '+esc(s.suggested_url):''}</small></div><button type="button" class="primaryButton installedAdd" data-key="${esc(s.stable_key)}" data-url="${esc(s.suggested_url||'')}" title="${s.suggested_url?'Agregar al dashboard':'Agregar indicando la URL'}">Agregar</button></article>`;
         }).join('')}</div>`:`<div class="discoveryUnavailable">${discovery.unavailable?'Docker Discovery no está disponible en esta instalación. Puedes usar Personalizado.':'No hay contenedores pendientes por agregar. Puedes usar Personalizado.'}</div>`;
     }catch(e){$('status').textContent=e.message}
 };
@@ -738,7 +738,16 @@ $('modal').addEventListener('click',async e=>{
     const add=e.target.closest('.installedAdd');
     if(add){
         add.disabled=true;add.textContent='Agregando...';
-        try{await api('/api/v1/discovery/adopt',{method:'POST',body:JSON.stringify({stable_key:add.dataset.key,page_id:pageId})});$('modal').close();$('status').textContent='Contenedor agregado';await refresh()}
+        try{
+            let urlOverride='';
+            if(!add.dataset.url){
+                const entered=prompt('Este contenedor no publica una URL detectable. Escribe la URL para abrirlo desde el dashboard:','http://');
+                if(!entered){add.disabled=false;add.textContent='Agregar';return}
+                urlOverride=entered.trim();
+            }
+            await api('/api/v1/discovery/adopt',{method:'POST',body:JSON.stringify({stable_key:add.dataset.key,page_id:pageId,url_override:urlOverride})});
+            $('modal').close();$('status').textContent='Contenedor agregado';await refresh()
+        }
         catch(err){add.disabled=false;add.textContent='Agregar';alert(err.message)}
     }
 });
