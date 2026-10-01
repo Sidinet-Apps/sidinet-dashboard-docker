@@ -43,6 +43,14 @@ func New(cfg config.Config, log *slog.Logger, web embed.FS) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Existing installations are persistent state. Before any migration touches an
+	// existing database, keep a consistent SQLite snapshot inside /data/backups.
+	if databaseExists(cfg.DatabasePath) {
+		if _, backupErr := recovery.Create(db, cfg.DataDir, "pre-migration", "pre-migration"); backupErr != nil {
+			db.Close()
+			return nil, fmt.Errorf("pre-migration backup: %w", backupErr)
+		}
+	}
 	if err = db.Migrate(); err != nil {
 		db.Close()
 		return nil, err
@@ -65,6 +73,11 @@ func New(cfg config.Config, log *slog.Logger, web embed.FS) (*App, error) {
 	}
 	return &App{cfg: cfg, log: log, db: db, server: httpapi.New(cfg, log, db, p, w, assets), monitor: monitoring.New(db, 4)}, nil
 }
+func databaseExists(path string) bool {
+	st, err := os.Stat(path)
+	return err == nil && st.Mode().IsRegular() && st.Size() > 0
+}
+
 func (a *App) Run() error {
 	root, cancelRoot := context.WithCancel(context.Background())
 	defer cancelRoot()
