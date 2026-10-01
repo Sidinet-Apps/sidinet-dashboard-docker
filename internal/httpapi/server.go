@@ -709,7 +709,7 @@ func (s *Server) dashboardSettings(w http.ResponseWriter, r *http.Request) {
 		if len(in.Name) < 1 || len([]rune(in.Name)) > 40 {
 			s.json(w, 400, map[string]any{"error":"dashboard name must be 1-40 characters"}); return
 		}
-		q := `INSERT INTO settings(key,value,type,updated_at) VALUES('`+key+`,'`+database.Quote(in.Name)+`,'string',CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value=excluded.value,type='string',updated_at=CURRENT_TIMESTAMP;`
+		q := `INSERT INTO settings(key,value,type,updated_at) VALUES(`+database.Quote(key)+`,`+database.Quote(in.Name)+`,'string',CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value=excluded.value,type='string',updated_at=CURRENT_TIMESTAMP;`
 		if e:=s.db.Exec(q); e!=nil { s.json(w,500,map[string]any{"error":e.Error()}); return }
 		s.json(w,200,map[string]any{"ok":true,"name":in.Name})
 	default:
