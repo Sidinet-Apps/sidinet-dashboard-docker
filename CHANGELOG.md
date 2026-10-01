@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.1
+
+- Corrige el arranque del dashboard con volúmenes persistentes cuando se ejecuta con `cap_drop: ALL`.
+- Mantiene únicamente `CHOWN`, `SETUID` y `SETGID` en el dashboard para preparar `/data` y después bajar privilegios.
+- El Docker proxy omite el entrypoint del dashboard y arranca directamente sin intentar modificar `/data`.
+- Mantiene el Docker socket en modo read-only y el proxy sin capacidades Linux adicionales.
+
 ## 1.2.0
 
 - Adopta el diseño visual aprobado con Glass como experiencia predeterminada y cinco temas: Glass, Modern Dark, OLED, Light y Minimal.
