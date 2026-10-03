@@ -1,104 +1,35 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="glass">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="color-scheme" content="dark light">
-    <title>SIDINET Dashboard</title>
-    <link rel="icon" href="/assets/static/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/assets/static/css/app.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SIDINET Dashboard</title>
+<link rel="icon" href="/assets/static/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/static/css/app.css">
 </head>
-
 <body>
 <div id="wall"></div><div id="mount"></div>
-<div class="appShell">
-
-    <aside class="sidebar">
-        <div class="brand">
-            <div class="brandMark" aria-hidden="true"><i></i><i></i></div>
-            <div>
-                <strong id="dashboardName">SIDINET</strong>
-                <span>Dashboard</span>
-            </div>
-        </div>
-
-        <nav id="pages" class="sidebarNav"></nav>
-
-        <div class="sidebarBottom">
-            <button id="settings" class="sidebarButton" type="button">Configuración</button>
-        </div>
-    </aside>
-
-    <div class="workspace">
-
-        <header class="topbar">
-            <div class="searchBox">
-                <input
-                    id="search"
-                    type="search"
-                    placeholder="Buscar aplicaciones, páginas..."
-                    aria-label="Buscar"
-                >
-            </div>
-
-            <div id="dateTime" class="dateTime" aria-label="Fecha y hora"></div>
-            <span id="status" class="connectionStatus">Conectando...</span>
-            <div class="topActions"><button id="store" class="primaryButton" type="button">+ Agregar</button><button id="edit" class="primaryButton" type="button">Editar</button></div>
-        </header>
-
-        <main>
-
-            <section class="pageHeader">
-                <div>
-                    <h1 id="pageTitle">Inicio</h1>
-                    <p>Acceso rápido a tus aplicaciones y servicios.</p>
-                </div>
-
-                <div class="pageActions">
-                    <button id="addPage" type="button">+ Página</button>
-                    <button id="discover" type="button" hidden>Docker</button>
-                </div>
-            </section>
-
-            <section id="editor" class="editorBar" hidden>
-                <label>
-                    Vista
-                    <select id="breakpoint">
-                        <option value="desktop">Desktop</option>
-                        <option value="tablet">Tablet</option>
-                        <option value="mobile">Móvil</option>
-                    </select>
-                </label>
-
-                <div class="editorActions">
-                    <button id="undo" type="button">Deshacer</button>
-                    <button id="redo" type="button">Rehacer</button>
-                    <button id="cancel" type="button">Cancelar</button>
-                    <button id="save" class="primaryButton" type="button">
-                        Guardar
-                    </button>
-                </div>
-            </section>
-
-            <section id="searchResults" class="searchResults" hidden></section>
-
-            <section class="dashboardSection">
-
-                <section id="grid" class="grid"></section>
-            </section>
-
-        </main>
-
-    </div>
-
+<div class="shell">
+<aside>
+  <div class="brand"><div class="logo" aria-hidden="true"><i></i><i></i></div><div><strong id="dashboardName">SIDINET</strong><span>Dashboard</span></div></div>
+  <nav id="pages" class="nav"></nav>
+  <div class="sideBottom"><button id="settings" type="button">Configuración</button></div>
+</aside>
+<main>
+  <header class="top">
+    <input id="search" class="search" type="search" placeholder="Buscar aplicaciones, páginas..." aria-label="Buscar">
+    <div id="dateTime" class="dateTime"></div><span id="status" class="connectionStatus">Conectando...</span>
+    <div class="actions"><button id="store" class="action" type="button">＋ Agregar</button><button id="edit" class="action edit" type="button">✎ &nbsp; Editar</button></div>
+  </header>
+  <div class="content">
+    <section class="pageHeader"><h1 id="pageTitle" class="pageTitle">Aplicaciones</h1><p>Acceso rápido a tus aplicaciones y servicios.</p><div class="pageActions"><button id="addPage" type="button">+ Página</button><button id="discover" type="button" hidden>Docker</button></div></section>
+    <section id="editor" class="editorBar" hidden><label>Vista <select id="breakpoint"><option value="desktop">Desktop</option><option value="tablet">Tablet</option><option value="mobile">Móvil</option></select></label><div class="editorActions"><button id="undo" type="button">Deshacer</button><button id="redo" type="button">Rehacer</button><button id="cancel" type="button">Cancelar</button><button id="save" class="primaryButton" type="button">Guardar</button></div></section>
+    <section id="searchResults" class="searchResults" hidden></section>
+    <section class="dashboardSection"><section id="grid" class="grid"></section></section>
+  </div>
+</main>
 </div>
-<footer class="sidinetCredit">Dashboard By Sidinet Consultoría Digital y Sistemas<br>Derechos Reservados</footer>
-
-<dialog id="modal">
-    <div id="modalBody"></div>
-    <button id="closeModal" type="button">Cerrar</button>
-</dialog>
-
+<footer class="footerRef">Dashboard By Sidinet Consultoría Digital y Sistemas<br>Derechos Reservados</footer>
+<dialog id="modal"><div id="modalBody"></div><button id="closeModal" type="button">Cerrar</button></dialog>
 <script src="/assets/static/js/app.js" defer></script>
 </body>
 </html>
